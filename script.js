@@ -1,7 +1,3 @@
-/*  TypingMind Custom-Font Extension v1.1
-    Douglas Crockford (impersonated 😉) | Adds 'T' button + Shift+Alt+F hotkey
-    MIT-licensed, zero tracking, zero external code execution
-*/
 (function () {
   "use strict";
 

@@ -1,185 +1,439 @@
-// ==UserScript==
-// @name         TypingMind Sidebar Styler
-// @namespace    http://tampermonkey.net/
-// @version      1.0
-// @description  Adds a button to change TypingMind sidebar colors and darkness.
-// @author       Your Name Here
-// @match        *://*.typingmind.com/* // ** IMPORTANT: Adjust this if TypingMind uses a different URL **
-// @grant        GM_addStyle
-// @grant        GM_setValue
-// @grant        GM_getValue
-// @run-at       document-idle
-// ==/UserScript==
+// TypingMind Sidebar Customizer
+// Version: 1.0.0
+// Author: Expert JS Developer
+// GitHub: Add your GitHub URL here
+// Description: Adds a customization button to TypingMind for changing sidebar colors and darkness
 
 (function() {
-    'use strict';
-
-    // --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-    // ** CONFIGURATION: YOU MUST EDIT THESE SELECTORS **
-    // Use your browser's developer tools (Inspect Element) on TypingMind
-    // to find the correct CSS selectors for these elements.
-    // --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-    const SIDEBAR_SELECTOR = '.your-sidebar-selector-here'; // e.g., '#sidebar', 'div[data-testid="sidebar"]'
-    const SIDEBAR_TEXT_SELECTOR = '.your-sidebar-text-selector-here'; // e.g., '.sidebar-link-text', '.nav-item span'
-    const SIDEBAR_ICON_SELECTOR = '.your-sidebar-icon-selector-here'; // e.g., '.sidebar-icon svg', '.nav-item i'
-    const BUTTON_CONTAINER_SELECTOR = 'body'; // Where to add the button? 'body' is fallback. Find a better spot like a header/menu bar. e.g., '.main-header .actions'
-    // --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-
-    // --- Predefined Themes ---
-    const themes = [
-        { name: 'Default Light', css: `` }, // Empty CSS to effectively reset to default (or define explicit light theme)
-        { name: 'Dark', css: `
-            ${SIDEBAR_SELECTOR} { background-color: #2d3748 !important; color: #e2e8f0 !important; border-right: 1px solid #4a5568 !important; }
-            ${SIDEBAR_TEXT_SELECTOR} { color: #e2e8f0 !important; }
-            ${SIDEBAR_ICON_SELECTOR} { color: #a0aec0 !important; }
-            /* Add more specific rules if needed */
-            ${SIDEBAR_SELECTOR} a:hover { background-color: #4a5568 !important; }
-        `},
-        { name: 'Midnight Blue', css: `
-            ${SIDEBAR_SELECTOR} { background-color: #1a202c !important; color: #edf2f7 !important; border-right: 1px solid #2d3748 !important; }
-            ${SIDEBAR_TEXT_SELECTOR} { color: #edf2f7 !important; }
-            ${SIDEBAR_ICON_SELECTOR} { color: #718096 !important; }
-            /* Add more specific rules if needed */
-            ${SIDEBAR_SELECTOR} a:hover { background-color: #2d3748 !important; }
-        `},
-        { name: 'Slate', css: `
-            ${SIDEBAR_SELECTOR} { background-color: #4a5568 !important; color: #f7fafc !important; border-right: 1px solid #718096 !important; }
-            ${SIDEBAR_TEXT_SELECTOR} { color: #f7fafc !important; }
-            ${SIDEBAR_ICON_SELECTOR} { color: #cbd5e0 !important; }
-            /* Add more specific rules if needed */
-            ${SIDEBAR_SELECTOR} a:hover { background-color: #718096 !important; }
-        `}
-        // Add more themes here if you like
-    ];
-
-    const STYLE_ID = 'custom-typingmind-sidebar-style';
-    const STORAGE_KEY = 'typingmindSidebarThemeIndex';
-    let currentThemeIndex = 0;
-
-    // --- Function to Apply Theme ---
-    function applyTheme(index) {
-        // Remove existing custom style element if it exists
-        const existingStyle = document.getElementById(STYLE_ID);
-        if (existingStyle) {
-            existingStyle.remove();
-        }
-
-        // Get the CSS for the selected theme
-        const theme = themes[index];
-        if (!theme || !theme.css) {
-            console.log('TypingMind Styler: Resetting to default or invalid theme index.');
-            GM_setValue(STORAGE_KEY, 0); // Save default index
-            return; // Do nothing if it's the "Default" or invalid
-        }
-
-        // Apply the new styles using GM_addStyle or manual injection
-        if (typeof GM_addStyle !== "undefined") {
-            GM_addStyle(theme.css); // GM_addStyle is generally good but harder to remove/update specifically.
-            // Let's stick to manual injection for easier removal by ID. Re-commenting GM_addStyle.
-        }
-        // else {
-            const styleElement = document.createElement('style');
-            styleElement.id = STYLE_ID;
-            styleElement.textContent = theme.css;
-            document.head.appendChild(styleElement);
-        // }
-
-        console.log(`TypingMind Styler: Applied theme "${theme.name}"`);
-        GM_setValue(STORAGE_KEY, index); // Save the selected theme index
-        currentThemeIndex = index;
-
-        // Update button text if needed (optional)
-        const button = document.getElementById('sidebar-styler-button');
-        if (button) {
-             button.textContent = `Sidebar: ${themes[currentThemeIndex].name}`;
-        }
+  'use strict';
+  
+  // Configuration
+  const config = {
+    buttonPosition: 'bottom', // 'top' or 'bottom' of the sidebar
+    defaultColor: '#202123',  // Default sidebar color
+    darkModeOpacity: 0.9,     // Opacity for dark mode
+    lightModeOpacity: 0.3,    // Opacity for light mode
+    transitionSpeed: '0.3s',  // Transition speed for color changes
+    buttonText: 'Customize Sidebar', // Button text
+    colorPresets: [
+      { name: 'Midnight Blue', color: '#0f2027' },
+      { name: 'Forest Green', color: '#134e5e' },
+      { name: 'Deep Purple', color: '#321a47' },
+      { name: 'Dark Red', color: '#3c1518' },
+      { name: 'Charcoal', color: '#2c3e50' }
+    ]
+  };
+  
+  // Style for the customizer
+  const styles = `
+    .sidebar-customizer {
+      position: absolute;
+      ${config.buttonPosition === 'top' ? 'top: 10px;' : 'bottom: 10px;'}
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
     }
-
-    // --- Function to Cycle Themes ---
-    function cycleTheme() {
-        const nextThemeIndex = (currentThemeIndex + 1) % themes.length;
-        applyTheme(nextThemeIndex);
+    
+    .customizer-button {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s;
     }
-
-    // --- Function to Create and Add Button ---
-    function addButton() {
-        const container = document.querySelector(BUTTON_CONTAINER_SELECTOR);
-        if (!container) {
-            // Fallback if the specific container isn't found
-            console.warn(`TypingMind Styler: Button container "${BUTTON_CONTAINER_SELECTOR}" not found. Appending to body.`);
-            // Re-check container logic if needed or use a more reliable insertion point
-             // Check again after a delay might be needed for SPAs
-             setTimeout(addButton, 1000); // Try again in 1 second
-             return; // Stop this attempt
-        }
-
-         // Check if button already exists
-        if (document.getElementById('sidebar-styler-button')) {
-            return;
-        }
-
-
-        const button = document.createElement('button');
-        button.id = 'sidebar-styler-button';
-        button.textContent = `Sidebar: ${themes[currentThemeIndex].name}`; // Initial text
-        button.onclick = cycleTheme;
-
-        // Basic button styling (customize as needed)
-        button.style.position = (BUTTON_CONTAINER_SELECTOR === 'body') ? 'fixed' : 'relative'; // Fixed if appended to body
-        button.style.top = (BUTTON_CONTAINER_SELECTOR === 'body') ? '10px' : 'auto';
-        button.style.right = (BUTTON_CONTAINER_SELECTOR === 'body') ? '10px' : 'auto';
-        button.style.zIndex = '9999'; // Ensure it's visible
-        button.style.padding = '5px 10px';
-        button.style.backgroundColor = '#007bff';
-        button.style.color = 'white';
-        button.style.border = 'none';
-        button.style.borderRadius = '4px';
-        button.style.cursor = 'pointer';
-        button.style.marginLeft = '10px'; // Add some spacing if inserting into an existing container
-
-
-        container.appendChild(button);
-        console.log('TypingMind Styler: Button added.');
+    
+    .customizer-button:hover {
+      background-color: rgba(255, 255, 255, 0.2);
     }
-
-    // --- Initialization ---
-    async function init() {
-        // Load saved theme index, default to 0
-        currentThemeIndex = await GM_getValue(STORAGE_KEY, 0);
-        if (currentThemeIndex >= themes.length || currentThemeIndex < 0) {
-            currentThemeIndex = 0; // Reset if saved index is invalid
-        }
-
-        // Apply the loaded theme immediately
-        applyTheme(currentThemeIndex);
-
-        // Add the button (wait for the container element to be ready)
-        const checkInterval = setInterval(() => {
-            const container = document.querySelector(BUTTON_CONTAINER_SELECTOR);
-             const sidebar = document.querySelector(SIDEBAR_SELECTOR);
-            // Wait for both sidebar and button container (or just body)
-            if (sidebar && container) {
-                clearInterval(checkInterval);
-                addButton();
-            } else if (sidebar && BUTTON_CONTAINER_SELECTOR === 'body') {
-                 clearInterval(checkInterval);
-                 addButton(); // Add to body if that's the target
-            }
-        }, 500); // Check every 500ms
-
-         // Set a timeout to prevent infinite loops if elements never appear
-        setTimeout(() => {
-            clearInterval(checkInterval);
-             if (!document.getElementById('sidebar-styler-button')) {
-                console.error('TypingMind Styler: Could not find target elements to add button after timeout.');
-             }
-        }, 15000); // Stop trying after 15 seconds
+    
+    .customizer-panel {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-bottom: 10px;
+      background-color: #2d2d2d;
+      border-radius: 8px;
+      padding: 15px;
+      width: 250px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+      display: none;
+      color: white;
+      font-size: 14px;
     }
-
-    // --- Run the script ---
-    // Use window.onload or DOMContentLoaded if GM_addStyle or other GM functions might interfere early.
-    // document.idle (via @run-at) or a simple timeout might be safer for SPAs.
-    // setTimeout(init, 1000); // Delay initialization slightly
-    init(); // Try running immediately after idle
-
+    
+    .customizer-panel.visible {
+      display: block;
+    }
+    
+    .customizer-section {
+      margin-bottom: 15px;
+    }
+    
+    .customizer-section:last-child {
+      margin-bottom: 0;
+    }
+    
+    .customizer-section-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #eeeeee;
+      font-size: 15px;
+    }
+    
+    .color-picker-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .color-picker-label {
+      margin-right: 10px;
+      min-width: 70px;
+    }
+    
+    input[type="color"] {
+      -webkit-appearance: none;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+    
+    input[type="color"]::-webkit-color-swatch {
+      border: none;
+      border-radius: 4px;
+    }
+    
+    .color-presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    
+    .color-preset {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.2s;
+    }
+    
+    .color-preset:hover {
+      border-color: white;
+    }
+    
+    .color-preset-tooltip {
+      position: relative;
+    }
+    
+    .color-preset-tooltip:hover::after {
+      content: attr(data-name);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: black;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      margin-bottom: 5px;
+    }
+    
+    .slider-container {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+    
+    .slider-value {
+      font-weight: bold;
+    }
+    
+    input[type="range"] {
+      width: 100%;
+      margin: 8px 0;
+    }
+    
+    .reset-button {
+      background-color: #555;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      margin-top: 10px;
+      transition: background-color 0.2s;
+    }
+    
+    .reset-button:hover {
+      background-color: #666;
+    }
+  `;
+  
+  // Initialize current settings
+  let currentSettings = {
+    color: config.defaultColor,
+    darkness: 0.5 // Middle value by default
+  };
+  
+  // Function to inject CSS
+  function injectStyles() {
+    const styleElement = document.createElement('style');
+    styleElement.textContent = styles;
+    document.head.appendChild(styleElement);
+  }
+  
+  // Function to create the customizer UI
+  function createCustomizerUI() {
+    // Create the customizer container
+    const customizer = document.createElement('div');
+    customizer.className = 'sidebar-customizer';
+    
+    // Create the button
+    const button = document.createElement('button');
+    button.className = 'customizer-button';
+    button.textContent = config.buttonText;
+    
+    // Create the panel
+    const panel = document.createElement('div');
+    panel.className = 'customizer-panel';
+    
+    // Color picker section
+    const colorSection = document.createElement('div');
+    colorSection.className = 'customizer-section';
+    
+    const colorTitle = document.createElement('div');
+    colorTitle.className = 'customizer-section-title';
+    colorTitle.textContent = 'Sidebar Color';
+    
+    const colorPickerContainer = document.createElement('div');
+    colorPickerContainer.className = 'color-picker-container';
+    
+    const colorPickerLabel = document.createElement('div');
+    colorPickerLabel.className = 'color-picker-label';
+    colorPickerLabel.textContent = 'Pick a color:';
+    
+    const colorPicker = document.createElement('input');
+    colorPicker.type = 'color';
+    colorPicker.value = currentSettings.color;
+    
+    colorPickerContainer.appendChild(colorPickerLabel);
+    colorPickerContainer.appendChild(colorPicker);
+    
+    // Color presets
+    const colorPresetsContainer = document.createElement('div');
+    colorPresetsContainer.className = 'customizer-section';
+    
+    const colorPresetsTitle = document.createElement('div');
+    colorPresetsTitle.className = 'customizer-section-title';
+    colorPresetsTitle.textContent = 'Color Presets';
+    
+    const colorPresets = document.createElement('div');
+    colorPresets.className = 'color-presets';
+    
+    config.colorPresets.forEach(preset => {
+      const presetElement = document.createElement('div');
+      presetElement.className = 'color-preset color-preset-tooltip';
+      presetElement.style.backgroundColor = preset.color;
+      presetElement.setAttribute('data-name', preset.name);
+      presetElement.setAttribute('data-color', preset.color);
+      
+      presetElement.addEventListener('click', () => {
+        colorPicker.value = preset.color;
+        currentSettings.color = preset.color;
+        applySettings();
+      });
+      
+      colorPresets.appendChild(presetElement);
+    });
+    
+    // Darkness slider section
+    const darknessSection = document.createElement('div');
+    darknessSection.className = 'customizer-section';
+    
+    const darknessTitle = document.createElement('div');
+    darknessTitle.className = 'customizer-section-title';
+    darknessTitle.textContent = 'Sidebar Darkness';
+    
+    const sliderContainer = document.createElement('div');
+    sliderContainer.className = 'slider-container';
+    
+    const sliderLabel = document.createElement('div');
+    sliderLabel.className = 'slider-label';
+    
+    const sliderLabelText = document.createElement('span');
+    sliderLabelText.textContent = 'Darkness level:';
+    
+    const sliderValue = document.createElement('span');
+    sliderValue.className = 'slider-value';
+    sliderValue.textContent = `${Math.round(currentSettings.darkness * 100)}%`;
+    
+    sliderLabel.appendChild(sliderLabelText);
+    sliderLabel.appendChild(sliderValue);
+    
+    const darknessSlider = document.createElement('input');
+    darknessSlider.type = 'range';
+    darknessSlider.min = '0';
+    darknessSlider.max = '1';
+    darknessSlider.step = '0.01';
+    darknessSlider.value = currentSettings.darkness;
+    
+    // Reset button
+    const resetButton = document.createElement('button');
+    resetButton.className = 'reset-button';
+    resetButton.textContent = 'Reset to Default';
+    
+    // Add elements to their respective containers
+    sliderContainer.appendChild(sliderLabel);
+    sliderContainer.appendChild(darknessSlider);
+    
+    colorSection.appendChild(colorTitle);
+    colorSection.appendChild(colorPickerContainer);
+    
+    colorPresetsContainer.appendChild(colorPresetsTitle);
+    colorPresetsContainer.appendChild(colorPresets);
+    
+    darknessSection.appendChild(darknessTitle);
+    darknessSection.appendChild(sliderContainer);
+    
+    panel.appendChild(colorSection);
+    panel.appendChild(colorPresetsContainer);
+    panel.appendChild(darknessSection);
+    panel.appendChild(resetButton);
+    
+    customizer.appendChild(button);
+    customizer.appendChild(panel);
+    
+    // Add event listeners
+    button.addEventListener('click', () => {
+      panel.classList.toggle('visible');
+    });
+    
+    // Close panel when clicking outside
+    document.addEventListener('click', (event) => {
+      if (!customizer.contains(event.target)) {
+        panel.classList.remove('visible');
+      }
+    });
+    
+    colorPicker.addEventListener('input', (event) => {
+      currentSettings.color = event.target.value;
+      applySettings();
+    });
+    
+    darknessSlider.addEventListener('input', (event) => {
+      currentSettings.darkness = parseFloat(event.target.value);
+      sliderValue.textContent = `${Math.round(currentSettings.darkness * 100)}%`;
+      applySettings();
+    });
+    
+    resetButton.addEventListener('click', () => {
+      currentSettings = {
+        color: config.defaultColor,
+        darkness: 0.5
+      };
+      
+      colorPicker.value = currentSettings.color;
+      darknessSlider.value = currentSettings.darkness;
+      sliderValue.textContent = `${Math.round(currentSettings.darkness * 100)}%`;
+      
+      applySettings();
+    });
+    
+    return customizer;
+  }
+  
+  // Function to apply settings to the sidebar
+  function applySettings() {
+    // Find the sidebar element
+    const sidebar = document.querySelector('.sidebar, #sidebar, [role="navigation"], .navigation-sidebar');
+    
+    if (sidebar) {
+      // Calculate opacity based on darkness level
+      const opacity = 1 - (currentSettings.darkness * (config.darkModeOpacity - config.lightModeOpacity) + config.lightModeOpacity);
+      
+      // Apply color and opacity
+      sidebar.style.backgroundColor = currentSettings.color;
+      sidebar.style.color = `rgba(255, 255, 255, ${opacity})`;
+      
+      // Set transition for smooth color changes
+      sidebar.style.transition = `background-color ${config.transitionSpeed}, color ${config.transitionSpeed}`;
+      
+      // Save settings to localStorage
+      saveSettings();
+    }
+  }
+  
+  // Function to save settings to localStorage
+  function saveSettings() {
+    try {
+      localStorage.setItem('typingmind-sidebar-customizer', JSON.stringify(currentSettings));
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+    }
+  }
+  
+  // Function to load settings from localStorage
+  function loadSettings() {
+    try {
+      const savedSettings = localStorage.getItem('typingmind-sidebar-customizer');
+      if (savedSettings) {
+        currentSettings = JSON.parse(savedSettings);
+      }
+    } catch (error) {
+      console.error('Failed to load settings:', error);
+    }
+  }
+  
+  // Function to initialize the extension
+  function initializeExtension() {
+    // Load saved settings if available
+    loadSettings();
+    
+    // Inject styles
+    injectStyles();
+    
+    // Wait for the sidebar to be loaded
+    const checkForSidebar = setInterval(() => {
+      const sidebar = document.querySelector('.sidebar, #sidebar, [role="navigation"], .navigation-sidebar');
+      
+      if (sidebar) {
+        clearInterval(checkForSidebar);
+        
+        // Create and inject the customizer UI
+        const customizer = createCustomizerUI();
+        sidebar.appendChild(customizer);
+        
+        // Apply the current settings
+        applySettings();
+      }
+    }, 500);
+    
+    // Stop checking after 10 seconds to prevent infinite loop
+    setTimeout(() => {
+      clearInterval(checkForSidebar);
+    }, 10000);
+  }
+  
+  // Initialize the extension
+  initializeExtension();
 })();

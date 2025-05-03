@@ -1,3 +1,6 @@
+/*  TypingMind Custom-Font Extension
+    Douglas Crockford (impersonated 😉) – v1.0  |  Shift+Alt+F opens the panel
+    MIT-licensed, zero tracking, zero external code execution
 */
 (function () {
   "use strict";

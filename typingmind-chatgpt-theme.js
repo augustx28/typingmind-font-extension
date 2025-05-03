@@ -1,219 +1,160 @@
-/* ChatGPT Theme for TypingMind
- * Created: May 3, 2025
- * Version: 1.0
- * Description: This theme mimics the ChatGPT dark theme UI for TypingMind
- */
+{
+  "manifest_version": 1,
+  "name": "ChatGPT Dark Theme for TypingMind",
+  "version": "1.1.0",
+  "description": "Applies a ChatGPT-style dark gray theme to the TypingMind UI. (Updated)",
+  "author": "AI Assistant & Your Name",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "css": ["style.css"]
+    }
+  ]
+}
+/* ChatGPT Dark Theme for TypingMind - style.css */
+/* Version 1.1.0 */
 
-/* Global styles */
+/* === Color Palette (Based on common ChatGPT dark theme observations) === */
 :root {
-  --chatgpt-bg-dark: #202123;
-  --chatgpt-bg-darker: #131314;
-  --chatgpt-bg-chat: #343541;
-  --chatgpt-bg-response: #444654;
-  --chatgpt-text: #ECECF1;
-  --chatgpt-text-secondary: #9ca3af;
-  --chatgpt-border: #4d4d4f;
-  --chatgpt-accent: #10a37f;
-  --chatgpt-hover: #2A2B32;
+  --chatgpt-dark-bg-primary: #202123;      /* Deepest gray, main background */
+  --chatgpt-dark-bg-secondary: #343541;    /* Slightly lighter, messages/inputs */
+  --chatgpt-dark-bg-sidebar: #2A2B32;      /* Sidebar background */
+  --chatgpt-dark-bg-hover: #40414F;        /* Hover states */
+  --chatgpt-dark-text-primary: #ECECF1;    /* Primary text (off-white) */
+  --chatgpt-dark-text-secondary: #A9A9A9;   /* Secondary text, icons */
+  --chatgpt-dark-border: #565869;         /* Borders */
+  --chatgpt-dark-input-bg: #40414F;       /* Input field background */
 }
 
-/* Background colors */
-body, .page-content, .dark {
-  background-color: var(--chatgpt-bg-chat) !important;
-  color: var(--chatgpt-text) !important;
+/* === Base Overrides === */
+body, html {
+  background-color: var(--chatgpt-dark-bg-primary) !important;
+  color: var(--chatgpt-dark-text-primary) !important;
 }
 
-/* Sidebar styling */
-.sidebar, .sidebar-content, .dark .sidebar {
-  background-color: var(--chatgpt-bg-dark) !important;
-  border-right: 1px solid var(--chatgpt-border) !important;
+/* === Sidebar Styling === */
+/* !! Adjust selectors like .sidebar, .nav-item based on TypingMind !! */
+.sidebar, #sidebar, .left-navigation, .conversations-list {
+  background-color: var(--chatgpt-dark-bg-sidebar) !important;
+  border-right: 1px solid var(--chatgpt-dark-border) !important;
+  color: var(--chatgpt-dark-text-secondary) !important;
 }
 
-.sidebar-header, .dark .sidebar-header {
-  border-bottom: 1px solid var(--chatgpt-border) !important;
+.sidebar a, .nav-item, .conversation-item a, .sidebar button {
+  color: var(--chatgpt-dark-text-secondary) !important;
+  border: none !important;
+  background-color: transparent !important;
 }
 
-/* Chat list & navigation */
-.chat-list-item, .nav-item, .folder-item, .dark .chat-list-item, .dark .nav-item, .dark .folder-item {
-  color: var(--chatgpt-text) !important;
-  border-radius: 5px !important;
-  margin-bottom: 3px !important;
+.sidebar a:hover, .nav-item:hover, .conversation-item a:hover, .sidebar button:hover,
+.sidebar .active, .nav-item.active, .conversation-item.active a {
+  background-color: var(--chatgpt-dark-bg-hover) !important;
+  color: var(--chatgpt-dark-text-primary) !important;
+  border-radius: 6px; /* Subtle rounding */
 }
 
-.chat-list-item:hover, .nav-item:hover, .folder-item:hover,
-.dark .chat-list-item:hover, .dark .nav-item:hover, .dark .folder-item:hover {
-  background-color: var(--chatgpt-hover) !important;
+/* Ensure icons match text color */
+.sidebar svg, .nav-item svg, .conversation-item svg {
+   fill: currentColor !important; /* Or stroke, depending on the icon type */
+   color: currentColor !important;
 }
 
-.chat-list-item.active, .nav-item.active, .folder-item.active,
-.dark .chat-list-item.active, .dark .nav-item.active, .dark .folder-item.active {
-  background-color: var(--chatgpt-hover) !important;
+
+/* === Main Chat Area === */
+/* !! Adjust selectors like .chat-container, .main-view !! */
+.chat-container, .main-view, #chat-history {
+  background-color: var(--chatgpt-dark-bg-primary) !important;
 }
 
-/* Chat interface */
-.chat-container, .chat-content, .dark .chat-container, .dark .chat-content {
-  background-color: var(--chatgpt-bg-chat) !important;
+/* === Message Bubbles === */
+/* !! Adjust selectors like .message, .user-message, .ai-message !! */
+.message, .chat-bubble, .message-row {
+  background-color: var(--chatgpt-dark-bg-primary) !important; /* Match main background */
+  color: var(--chatgpt-dark-text-primary) !important;
+  border: none !important; /* Remove borders if any */
+  margin-bottom: 15px !important; /* Adjust spacing */
 }
 
-/* Message bubbles */
-.message-bubble, .dark .message-bubble {
-  border-radius: 5px !important;
-  padding: 12px !important;
-  margin-bottom: 20px !important;
+/* Optional: Slightly different background for user/AI messages if desired */
+.message.user-message {
+  /* background-color: var(--chatgpt-dark-bg-secondary) !important; */ /* Example */
+}
+.message.ai-message {
+   /* background-color: var(--chatgpt-dark-bg-secondary) !important; */ /* Example */
 }
 
-.message-bubble.user, .dark .message-bubble.user {
-  background-color: var(--chatgpt-bg-chat) !important;
-  border: 1px solid var(--chatgpt-border) !important;
+/* Make code blocks consistent */
+pre, code, .code-block {
+  background-color: var(--chatgpt-dark-bg-secondary) !important;
+  color: var(--chatgpt-dark-text-primary) !important;
+  border: 1px solid var(--chatgpt-dark-border) !important;
+  border-radius: 4px !important;
 }
 
-.message-bubble.assistant, .dark .message-bubble.assistant {
-  background-color: var(--chatgpt-bg-response) !important;
+/* === Input Area === */
+/* !! Adjust selectors like .input-area, #message-input !! */
+.input-area, .composer, #prompt-textarea-container {
+  background-color: var(--chatgpt-dark-bg-primary) !important;
+  border-top: 1px solid var(--chatgpt-dark-border) !important;
 }
 
-/* Input area */
-.chat-input-container, .chat-input, .dark .chat-input-container, .dark .chat-input {
-  background-color: var(--chatgpt-bg-dark) !important;
-  border: 1px solid var(--chatgpt-border) !important;
+textarea, .prompt-textarea, #message-input {
+  background-color: var(--chatgpt-dark-input-bg) !important;
+  color: var(--chatgpt-dark-text-primary) !important;
+  border: 1px solid var(--chatgpt-dark-border) !important;
   border-radius: 8px !important;
+  box-shadow: none !important;
 }
 
-.chat-input:focus, .dark .chat-input:focus {
-  border-color: var(--chatgpt-accent) !important;
+textarea::placeholder, .prompt-textarea::placeholder {
+  color: var(--chatgpt-dark-text-secondary) !important;
+  opacity: 0.8;
 }
 
-/* Buttons */
-button, .button, .dark button, .dark .button {
-  background-color: var(--chatgpt-bg-dark) !important;
-  color: var(--chatgpt-text) !important;
-  border: 1px solid var(--chatgpt-border) !important;
-  border-radius: 5px !important;
+/* === Buttons === */
+/* !! Adjust button selectors if needed !! */
+button, .btn, input[type="submit"] {
+  background-color: var(--chatgpt-dark-input-bg) !important;
+  color: var(--chatgpt-dark-text-primary) !important;
+  border: 1px solid var(--chatgpt-dark-border) !important;
+  border-radius: 6px !important;
+  padding: 8px 16px !important;
+  transition: background-color 0.2s ease;
 }
 
-button:hover, .button:hover, .dark button:hover, .dark .button:hover {
-  background-color: var(--chatgpt-hover) !important;
+button:hover, .btn:hover, input[type="submit"]:hover {
+  background-color: var(--chatgpt-dark-bg-hover) !important;
+  border-color: #6e707b !important; /* Slightly lighter border on hover */
 }
 
-button.primary, .button.primary, .dark button.primary, .dark .button.primary {
-  background-color: var(--chatgpt-accent) !important;
-  border-color: var(--chatgpt-accent) !important;
-}
-
-button.primary:hover, .button.primary:hover, 
-.dark button.primary:hover, .dark .button.primary:hover {
-  background-color: #0e8c6c !important;
-}
-
-/* Settings Modal */
-.modal, .modal-content, .dark .modal, .dark .modal-content {
-  background-color: var(--chatgpt-bg-dark) !important;
-  border: 1px solid var(--chatgpt-border) !important;
-}
-
-.modal-header, .dark .modal-header {
-  border-bottom: 1px solid var(--chatgpt-border) !important;
-}
-
-.modal-footer, .dark .modal-footer {
-  border-top: 1px solid var(--chatgpt-border) !important;
-}
-
-/* Form controls */
-input, textarea, select, .dark input, .dark textarea, .dark select {
-  background-color: var(--chatgpt-bg-darker) !important;
-  color: var(--chatgpt-text) !important;
-  border: 1px solid var(--chatgpt-border) !important;
-  border-radius: 5px !important;
-}
-
-input:focus, textarea:focus, select:focus,
-.dark input:focus, .dark textarea:focus, .dark select:focus {
-  border-color: var(--chatgpt-accent) !important;
-}
-
-/* Code blocks */
-pre, code, .code-block, .dark pre, .dark code, .dark .code-block {
-  background-color: var(--chatgpt-bg-darker) !important;
-  border: 1px solid var(--chatgpt-border) !important;
-  border-radius: 5px !important;
-}
-
-/* Headers */
-h1, h2, h3, h4, h5, h6, .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
-  color: var(--chatgpt-text) !important;
-}
-
-/* Links */
-a, .link, .dark a, .dark .link {
-  color: var(--chatgpt-accent) !important;
-}
-
-a:hover, .link:hover, .dark a:hover, .dark .link:hover {
-  text-decoration: underline !important;
-}
-
-/* Scrollbars */
+/* === Scrollbars (Webkit browsers like Chrome/Edge/Safari) === */
 ::-webkit-scrollbar {
-  width: 8px !important;
-  height: 8px !important;
+  width: 10px;
+  height: 10px;
 }
-
 ::-webkit-scrollbar-track {
-  background: var(--chatgpt-bg-darker) !important;
+  background: var(--chatgpt-dark-bg-sidebar); /* Track matches sidebar */
 }
-
 ::-webkit-scrollbar-thumb {
-  background: var(--chatgpt-border) !important;
-  border-radius: 10px !important;
+  background-color: var(--chatgpt-dark-border); /* Thumb color */
+  border-radius: 5px;
+  border: 2px solid var(--chatgpt-dark-bg-sidebar); /* Padding around thumb */
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--chatgpt-text-secondary) !important;
+  background-color: #6b6d7e; /* Lighter thumb on hover */
 }
 
-/* Tables */
-table, .dark table {
-  border-collapse: collapse !important;
-  width: 100% !important;
+/* === General Link Styling (if not covered above) === */
+a {
+  color: #A7C5F5 !important; /* A slightly blue tint for links, common in dark modes */
+}
+a:hover {
+  color: #C2DAF9 !important;
 }
 
-th, td, .dark th, .dark td {
-  border: 1px solid var(--chatgpt-border) !important;
-  padding: 8px !important;
-}
-
-th, .dark th {
-  background-color: var(--chatgpt-bg-darker) !important;
-}
-
-/* Additional custom styling for TypingMind-specific elements */
-.model-selector, .dark .model-selector {
-  background-color: var(--chatgpt-bg-dark) !important;
-  border: 1px solid var(--chatgpt-border) !important;
-}
-
-.dropdown-menu, .dark .dropdown-menu {
-  background-color: var(--chatgpt-bg-dark) !important;
-  border: 1px solid var(--chatgpt-border) !important;
-}
-
-.dropdown-item, .dark .dropdown-item {
-  color: var(--chatgpt-text) !important;
-}
-
-.dropdown-item:hover, .dark .dropdown-item:hover {
-  background-color: var(--chatgpt-hover) !important;
-}
-
-/* Toast notifications */
-.toast, .notification, .dark .toast, .dark .notification {
-  background-color: var(--chatgpt-bg-dark) !important;
-  color: var(--chatgpt-text) !important;
-  border: 1px solid var(--chatgpt-border) !important;
-}
-
-/* Loading spinner */
-.spinner, .loader, .dark .spinner, .dark .loader {
-  border-color: var(--chatgpt-accent) !important;
-  border-right-color: transparent !important;
-}
+/* === IMPORTANT FINAL NOTE === */
+/* The CSS selectors used here (.sidebar, .chat-container, .message, etc.) */
+/* are BEST GUESSES. You **MUST** use your browser's Developer Tools */
+/* (Right-click -> Inspect) on TypingMind to find the *actual* class names */
+/* and IDs used for elements like the sidebar, chat messages, input fields, */
+/* and buttons, then UPDATE the selectors in this file accordingly. */

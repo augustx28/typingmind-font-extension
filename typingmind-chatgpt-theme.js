@@ -3,7 +3,7 @@
   "name": "TypingMind - ChatGPT Dark Theme",
   "version": "1.0.1",
   "description": "Applies a ChatGPT-inspired dark theme to TypingMind. Updated May 2025.",
-  "author": "Your Name Here",
+  "author": "w",
   "content_scripts": [
     {
       "matches": [

@@ -1,140 +1,79 @@
-/**
- * TypingMind ChatGPT Dark Theme
- *
- * This script injects CSS to mimic the dark gray color scheme of the ChatGPT interface.
- * NOTE: CSS Selectors might need updating if TypingMind's structure changes.
- */
-(function() {
-    'use strict';
+// ChatGPT Theme for TypingMind
+// Version 1.0
 
-    // **Define ChatGPT Dark Theme Colors**
-    const colors = {
-        backgroundPrimary: '#343541', // Main background, user messages
-        backgroundSecondary: '#444654', // Assistant messages
-        backgroundTertiary: '#202123', // Sidebar, headers
-        textPrimary: '#ECECF1', // Main text
-        textSecondary: '#D1D5DB', // Slightly dimmer text
-        border: '#565869', // Borders, dividers
-        inputBackground: '#40414F', // Input text area
-        buttonBackground: '#40414F', // Buttons
-        buttonHoverBackground: '#4D4E5A', // Button hover
-    };
-
-    // **CSS Rules**
-    // These selectors are *examples* based on common web structures.
-    // **YOU WILL LIKELY NEED TO UPDATE THESE** using your browser's developer tools.
-    const css = `
-        /* --- General Body & Text --- */
-        body, #__next {
-            background-color: ${colors.backgroundPrimary} !important;
-            color: ${colors.textPrimary} !important;
-        }
-
-        /* --- Sidebar --- */
-        /* Replace '.sidebar-selector' with TypingMind's actual sidebar class/ID */
-        .dark .bg-gray-900, .dark .border-gray-700 { /* Example selectors, might need changing */
-            background-color: ${colors.backgroundTertiary} !important;
-            border-color: ${colors.border} !important;
-        }
-         /* Sidebar links/text */
-         .dark .text-gray-300, .dark .text-gray-400 {
-             color: ${colors.textSecondary} !important;
-         }
-         .dark .hover\\:bg-gray-700:hover {
-              background-color: ${colors.inputBackground} !important;
-         }
-
-
-        /* --- Chat Area --- */
-        /* Replace '.chat-container-selector' if needed */
-        .dark .bg-gray-800 { /* Example main chat area background */
-            background-color: ${colors.backgroundPrimary} !important;
-        }
-
-        /* --- User Message Bubbles --- */
-        /* Replace '.user-message-selector' */
-        .dark .bg-gray-800 .whitespace-pre-wrap { /* Example for user message - might need adjustment */
-             /* Often inherits body background, but can be set explicitly if needed */
-             /* background-color: ${colors.backgroundPrimary} !important; */
-             color: ${colors.textPrimary} !important;
-        }
-
-        /* --- Assistant Message Bubbles --- */
-        /* Replace '.assistant-message-selector' */
-        .dark .bg-gray-700 .whitespace-pre-wrap, /* Example selectors, often differs slightly */
-        .dark .markdown { /* Target markdown formatted text */
-            background-color: ${colors.backgroundSecondary} !important;
-            color: ${colors.textPrimary} !important;
-            border: 1px solid ${colors.border} !important; /* Optional subtle border */
-            border-radius: 6px; /* Optional rounded corners */
-            padding: 10px 12px; /* Optional padding */
-        }
-        .dark .bg-black\\/10 { /* This often targets code blocks */
-             background-color: ${colors.backgroundTertiary} !important;
-             color: ${colors.textPrimary} !important;
-             border: 1px solid ${colors.border} !important;
-        }
-
-        /* --- Input Area --- */
-        /* Replace '.input-textarea-selector' and '.input-container-selector' */
-        textarea, .dark textarea { /* Target the text area */
-            background-color: ${colors.inputBackground} !important;
-            color: ${colors.textPrimary} !important;
-            border-color: ${colors.border} !important;
-            caret-color: ${colors.textPrimary}; /* Make cursor visible */
-        }
-         .dark .border-gray-600 { /* General container borders */
-             border-color: ${colors.border} !important;
-         }
-
-        /* --- Buttons --- */
-        /* Replace '.button-selector' */
-        button, .dark button {
-            background-color: ${colors.buttonBackground} !important;
-            color: ${colors.textPrimary} !important;
-            border: 1px solid ${colors.border} !important;
-        }
-        button:hover, .dark button:hover {
-            background-color: ${colors.buttonHoverBackground} !important;
-        }
-
-        /* --- Headers/Other Elements --- */
-        /* Add more specific selectors as needed */
-        .dark .border-b { /* Bottom borders */
-             border-color: ${colors.border} !important;
-        }
-        .dark h1, .dark h2, .dark h3 { /* Headers */
-            color: ${colors.textPrimary} !important;
-        }
-
-        /* --- Scrollbars (Optional, Webkit/Blink browsers) --- */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: ${colors.backgroundTertiary};
-        }
-        ::-webkit-scrollbar-thumb {
-            background-color: ${colors.border};
-            border-radius: 4px;
-            border: 2px solid ${colors.backgroundTertiary};
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background-color: ${colors.inputBackground};
-        }
-
-    `;
-
-    // **Inject CSS into the page**
-    try {
-        const styleElement = document.createElement('style');
-        styleElement.id = 'chatgpt-dark-theme-styles'; // Add an ID for easy removal/update if needed
-        styleElement.innerHTML = css;
-        document.head.appendChild(styleElement);
-        console.log('ChatGPT Dark Theme applied successfully.');
-    } catch (error) {
-        console.error('Error applying ChatGPT Dark Theme:', error);
+// Wait for TypingMind to load
+document.addEventListener('typingmind-ready', function() {
+  // Create style element
+  const style = document.createElement('style');
+  style.textContent = `
+    /* Main interface colors */
+    :root {
+      --tm-color-bg: #343540 !important;
+      --tm-color-chat-bg: #343540 !important;
+      --tm-color-sidebar-bg: #202123 !important;
+      --tm-color-sidebar-selected: rgba(255, 255, 255, 0.1) !important;
+      --tm-color-sidebar-hover: rgba(255, 255, 255, 0.05) !important;
+      
+      /* Message colors */
+      --tm-color-user-msg-bg: #444654 !important;
+      --tm-color-assistant-msg-bg: #343540 !important;
+      
+      /* Code block colors */
+      --tm-color-code-bg: #1e1e2e !important;
+      
+      /* Button colors */
+      --tm-color-primary: #74AA9C !important;
+      --tm-color-primary-hover: #5d8a7d !important;
+      
+      /* Border colors */
+      --tm-color-border: #444654 !important;
+      
+      /* Input area colors */
+      --tm-color-input-bg: #40414f !important;
     }
-
-})();
+    
+    /* Apply darker sidebar color */
+    .sidebar {
+      background-color: var(--tm-color-sidebar-bg) !important;
+    }
+    
+    /* Apply user message background */
+    .message-user {
+      background-color: var(--tm-color-user-msg-bg) !important;
+    }
+    
+    /* Apply assistant message background */
+    .message-assistant {
+      background-color: var(--tm-color-assistant-msg-bg) !important;
+    }
+    
+    /* Apply input area background */
+    .chat-input-area {
+      background-color: var(--tm-color-input-bg) !important;
+    }
+    
+    /* Apply code block backgrounds */
+    pre, code {
+      background-color: var(--tm-color-code-bg) !important;
+    }
+    
+    /* Fix any other elements that might need adjustment */
+    .main-content {
+      background-color: var(--tm-color-bg) !important;
+    }
+    
+    /* Override any buttons to match ChatGPT style */
+    button.primary {
+      background-color: var(--tm-color-primary) !important;
+    }
+    
+    button.primary:hover {
+      background-color: var(--tm-color-primary-hover) !important;
+    }
+  `;
+  
+  // Add style to document
+  document.head.appendChild(style);
+  
+  console.log('ChatGPT theme applied to TypingMind');
+});

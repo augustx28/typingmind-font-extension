@@ -1,44 +1,33 @@
-# TypingMind UI Tweaks Extension (Modified)
-
 (function () {
   "use strict";
 
-  // --- Settings Keys ---
   const settingsKeys = {
-    // Visual Hiding Toggles
     hideTeams: "tweak_hideTeams",
     hideKB: "tweak_hideKB",
     hideLogo: "tweak_hideLogo",
     hideProfile: "tweak_hideProfile",
     hideChatProfiles: "tweak_hideChatProfiles",
     hidePinnedChars: "tweak_hidePinnedChars",
-    // Color Customization
     newChatButtonColor: "tweak_newChatButtonColor",
     workspaceIconColor: "tweak_workspaceIconColor",
     workspaceFontColor: "tweak_workspaceFontColor",
-    // General UI
     customPageTitle: "tweak_customPageTitle",
     showModalButton: "tweak_showModalButton",
-    // **NEW/REPURPOSED:** Global Font Settings
-    customFontUrl: "tweak_customFontUrl",       // URL for @import
-    customFontFamily: "tweak_customFontFamily", // Font family name (e.g., 'Inter')
-    customFontSize: "tweak_customFontSize",     // Base font size in px
+    customFontUrl: "tweak_customFontUrl",
+    customFontFamily: "tweak_customFontFamily",
+    customFontSize: "tweak_customFontSize",
+    customFontWeight: "tweak_customFontWeight", // Added font weight setting
+    applyFontToEntireUI: "tweak_applyFontToEntireUI", // Added toggle for entire UI
   };
 
-  // --- Constants and Variables ---
   const consolePrefix = "TypingMind Tweaks:";
-  const defaultNewChatButtonColor = "#2563eb"; // Default blue
-  const defaultWorkspaceIconColorVisual = "#9ca3af"; // Default gray-400
-  const defaultWorkspaceFontColorVisual = "#d1d5db"; // Default gray-300
+  const defaultNewChatButtonColor = "#2563eb";
+  const defaultWorkspaceIconColorVisual = "#9ca3af";
+  const defaultWorkspaceFontColorVisual = "#d1d5db";
   let originalPageTitle = null;
-  let modalOverlay = null;
-  let modalElement = null;
-  let feedbackElement = null;
-
-  // --- Utility Functions ---
   const cleanValue = (value) => {
-    if (value === null || typeof value === 'undefined') return null;
-    let cleaned = String(value).trim(); // Ensure it's a string for trimming
+    if (!value) return null;
+    let cleaned = value.trim();
     if (
       (cleaned.startsWith('"') && cleaned.endsWith('"')) ||
       (cleaned.startsWith("'") && cleaned.endsWith("'"))
@@ -50,646 +39,915 @@
 
   function getSetting(key, defaultValue = false) {
     const value = localStorage.getItem(key);
-    // Check for explicit "null" string which might happen with direct localStorage editing
-    if (value === null || value === "null") {
-        return defaultValue;
-    }
-    try {
-        // Use JSON.parse for booleans, numbers, and properly stored strings/objects
-        return JSON.parse(value);
-    } catch (e) {
-        // Fallback for potentially unquoted strings (legacy or direct edits)
-        console.warn(`${consolePrefix} Could not JSON parse setting ${key}. Falling back to raw value. Error:`, e);
-        return value; // Return raw string value if JSON parsing fails
-    }
+    return value === null ? defaultValue : JSON.parse(value);
   }
-
-
-  function saveSetting(key, value) {
-    try {
-      if (value === null || typeof value === 'undefined') {
-        localStorage.removeItem(key);
-        console.log(`${consolePrefix} Removed setting: ${key}`);
-      } else {
-        localStorage.setItem(key, JSON.stringify(value));
-         console.log(`${consolePrefix} Saved setting: ${key} = ${JSON.stringify(value)}`);
-      }
-
-      if (feedbackElement) {
-        feedbackElement.textContent = "Settings saved.";
-      }
-      // Apply relevant style updates immediately
-      applyStylesBasedOnSettings(); // Apply general visibility/color styles
-      if (
-        key === settingsKeys.customFontUrl ||
-        key === settingsKeys.customFontFamily ||
-        key === settingsKeys.customFontSize
-      ) {
-        applyCustomFont(); // Apply font styles
-      }
-       if (key === settingsKeys.customPageTitle) {
-          applyCustomTitle(); // Apply title changes
-       }
-
-    } catch (error) {
-      console.error(`${consolePrefix} Error saving setting ${key}:`, error);
-      if (feedbackElement) {
-        feedbackElement.textContent = "Error saving settings.";
-      }
-    }
-  }
-
-
-  // --- Core Styling Logic ---
 
   function applyStylesBasedOnSettings() {
-    // Get current settings
-    const hideTeams = getSetting(settingsKeys.hideTeams, false);
-    const hideKB = getSetting(settingsKeys.hideKB, false);
-    const hideLogo = getSetting(settingsKeys.hideLogo, false);
-    const hideProfile = getSetting(settingsKeys.hideProfile, false);
-    const hideChatProfiles = getSetting(settingsKeys.hideChatProfiles, false);
-    const hidePinnedChars = getSetting(settingsKeys.hidePinnedChars, false);
+    const hideTeams = getSetting(settingsKeys.hideTeams);
+    const hideKB = getSetting(settingsKeys.hideKB);
+    const hideLogo = getSetting(settingsKeys.hideLogo);
+    const hideProfile = getSetting(settingsKeys.hideProfile);
+    const hideChatProfiles = getSetting(settingsKeys.hideChatProfiles);
+    const hidePinnedChars = getSetting(settingsKeys.hidePinnedChars);
     const newChatColor = getSetting(settingsKeys.newChatButtonColor, null);
     const wsIconColor = getSetting(settingsKeys.workspaceIconColor, null);
     const wsFontColor = getSetting(settingsKeys.workspaceFontColor, null);
-    const showModalButtonSetting = getSetting(settingsKeys.showModalButton, true);
+    const showModalButtonSetting = getSetting(
+      settingsKeys.showModalButton,
+      true
+    );
+    const teamsButton = document.querySelector(
+      'button[data-element-id="workspace-tab-teams"]'
+    );
+    if (teamsButton) {
+      const newDisplay = hideTeams ? "none" : "";
+      if (teamsButton.style.display !== newDisplay) {
+        teamsButton.style.display = newDisplay;
+      }
+    } else {
+    }
 
-    // Apply Hide Teams
-    const teamsButton = document.querySelector('button[data-element-id="workspace-tab-teams"]');
-    if (teamsButton) teamsButton.style.display = hideTeams ? "none" : "";
-
-    // Apply Hide KB
-    const workspaceBar = document.querySelector('div[data-element-id="workspace-bar"]');
+    const workspaceBar = document.querySelector(
+      'div[data-element-id="workspace-bar"]'
+    );
+    let kbButtonFound = false;
     if (workspaceBar) {
-        workspaceBar.querySelectorAll("button").forEach(button => {
-            const textSpan = button.querySelector("span > span");
-            if (textSpan && textSpan.textContent.trim() === "KB") {
-                button.style.display = hideKB ? "none" : "";
-            }
-        });
-    }
-
-    // Apply Hide Logo & Announcement
-    const logoImage = document.querySelector('img[alt="TypingMind"][src="/logo.png"]');
-    let logoContainerDiv = logoImage?.parentElement?.parentElement;
-    if (logoContainerDiv && logoContainerDiv.tagName === "DIV") {
-        logoContainerDiv.style.display = hideLogo ? "none" : "";
-    }
-
-    // Apply Hide Profile
-    const profileButton = document.querySelector('button[data-element-id="workspace-profile-button"]');
-    if (profileButton) profileButton.style.display = hideProfile ? "none" : "";
-
-    // Apply Hide Chat Profiles
-     document.querySelectorAll("span").forEach(span => {
-        if (span.textContent.trim() === "Chat Profiles") {
-            const button = span.closest("button");
-            if (button) button.style.display = hideChatProfiles ? "none" : "";
+      const buttons = workspaceBar.querySelectorAll("button");
+      buttons.forEach((button) => {
+        const textSpan = button.querySelector("span > span");
+        if (textSpan && textSpan.textContent.trim() === "KB") {
+          kbButtonFound = true;
+          const newDisplay = hideKB ? "none" : "";
+          if (button.style.display !== newDisplay) {
+            button.style.display = newDisplay;
+          }
+          return;
         }
-     });
-
-
-    // Apply Hide Pinned Characters
-    const pinnedCharsContainer = document.querySelector('div[data-element-id="pinned-characters-container"]');
-    if (pinnedCharsContainer) pinnedCharsContainer.style.display = hidePinnedChars ? "none" : "";
-
-    // Apply New Chat Button Color
-    const newChatButton = document.querySelector('button[data-element-id="new-chat-button-in-side-bar"]');
+      });
+    }
+    const logoImage = document.querySelector(
+      'img[alt="TypingMind"][src="/logo.png"]'
+    );
+    let logoContainerDiv = null;
+    if (
+      logoImage &&
+      logoImage.parentElement &&
+      logoImage.parentElement.parentElement &&
+      logoImage.parentElement.parentElement.tagName === "DIV"
+    ) {
+      logoContainerDiv = logoImage.parentElement.parentElement;
+    }
+    if (logoContainerDiv) {
+      const newDisplay = hideLogo ? "none" : "";
+      if (logoContainerDiv.style.display !== newDisplay) {
+        logoContainerDiv.style.display = newDisplay;
+      }
+    } else {
+    }
+    const profileButton = document.querySelector(
+      'button[data-element-id="workspace-profile-button"]'
+    );
+    if (profileButton) {
+      const newDisplay = hideProfile ? "none" : "";
+      if (profileButton.style.display !== newDisplay) {
+        profileButton.style.display = newDisplay;
+      }
+    } else {
+    }
+    const chatProfileSpans = document.querySelectorAll("span");
+    let chatProfileButtonFound = false;
+    chatProfileSpans.forEach((span) => {
+      if (span.textContent.trim() === "Chat Profiles") {
+        const button = span.closest("button");
+        if (button) {
+          chatProfileButtonFound = true;
+          const newDisplay = hideChatProfiles ? "none" : "";
+          if (button.style.display !== newDisplay) {
+            button.style.display = newDisplay;
+          }
+        }
+      }
+    });
+    const pinnedCharsContainer = document.querySelector(
+      'div[data-element-id="pinned-characters-container"]'
+    );
+    if (pinnedCharsContainer) {
+      const newDisplay = hidePinnedChars ? "none" : "";
+      if (pinnedCharsContainer.style.display !== newDisplay) {
+        pinnedCharsContainer.style.display = newDisplay;
+      }
+    } else {
+    }
+    const newChatButton = document.querySelector(
+      'button[data-element-id="new-chat-button-in-side-bar"]'
+    );
     if (newChatButton) {
-        newChatButton.style.backgroundColor = newChatColor || ""; // Reset if null
+      if (newChatColor) {
+        if (newChatButton.style.backgroundColor !== newChatColor) {
+          newChatButton.style.backgroundColor = newChatColor;
+        }
+      } else {
+        if (newChatButton.style.backgroundColor !== "") {
+          newChatButton.style.backgroundColor = "";
+        }
+      }
+    } else {
     }
-
-    // Apply Workspace Icon Color
     if (workspaceBar) {
-        const icons = workspaceBar.querySelectorAll("svg");
-        icons.forEach(icon => {
-            // Exclude the Tweaks icon itself if we are customizing it separately
-             if (!icon.closest('#workspace-tab-tweaks')) {
-                 icon.style.color = wsIconColor || ""; // Reset if null
-             }
-        });
+      const icons = workspaceBar.querySelectorAll("svg");
+      icons.forEach((icon) => {
+        if (wsIconColor) {
+          if (icon.style.color !== wsIconColor) {
+            icon.style.color = wsIconColor;
+          }
+        } else {
+          if (icon.style.color !== "") {
+            icon.style.color = "";
+          }
+        }
+      });
+    } else {
     }
-
-    // Apply Workspace Font Color
     if (workspaceBar) {
-        const textSpans = workspaceBar.querySelectorAll("span");
-        textSpans.forEach(span => {
-            if (span.textContent.trim()) { // Apply only to spans with text content
-                span.style.color = wsFontColor || ""; // Reset if null
+      const textSpans = workspaceBar.querySelectorAll("span");
+      textSpans.forEach((span) => {
+        if (span.textContent.trim()) {
+          if (wsFontColor) {
+            if (span.style.color !== wsFontColor) {
+              span.style.color = wsFontColor;
             }
-        });
+          } else {
+            if (span.style.color !== "") {
+              span.style.color = "";
+            }
+          }
+        }
+      });
+    } else {
     }
+    if (workspaceBar) {
+      let tweaksButton = document.getElementById("workspace-tab-tweaks");
+      const settingsButton = workspaceBar.querySelector(
+        'button[data-element-id="workspace-tab-settings"]'
+      );
+      const syncButton = workspaceBar.querySelector(
+        'button[data-element-id="workspace-tab-cloudsync"]'
+      );
+      const styleReferenceButton = syncButton || profileButton;
 
-    // Handle Tweaks Button visibility and icon color
-    const tweaksButton = document.getElementById("workspace-tab-tweaks");
-    if (tweaksButton) {
-         // Update visibility based on setting
-        tweaksButton.style.display = showModalButtonSetting ? "inline-flex" : "none";
-
-        // Update icon color (use custom if set, else default visual)
+      if (tweaksButton) {
         const svgIcon = tweaksButton.querySelector("svg");
         if (svgIcon) {
-            const currentWsIconColor = getSetting(settingsKeys.workspaceIconColor, null);
-            svgIcon.style.color = currentWsIconColor || defaultWorkspaceIconColorVisual;
+          const currentWsIconColor = getSetting(
+            settingsKeys.workspaceIconColor,
+            null
+          );
+          const newColor =
+            currentWsIconColor || defaultWorkspaceIconColorVisual;
+          if (svgIcon.style.color !== newColor) {
+            svgIcon.style.color = newColor;
+          }
         }
+
+        const newDisplay = showModalButtonSetting ? "inline-flex" : "none";
+        if (tweaksButton.style.display !== newDisplay) {
+          tweaksButton.style.display = newDisplay;
+        }
+      }
     }
   }
-
   function applyCustomTitle() {
-    const customTitleRaw = localStorage.getItem(settingsKeys.customPageTitle);
-    const customTitle = cleanValue(customTitleRaw); // Clean potential quotes
-
-    if (customTitle && customTitle !== "") {
-        if (document.title !== customTitle) {
-            document.title = customTitle;
-        }
+    const customTitle = localStorage.getItem(settingsKeys.customPageTitle);
+    if (
+      customTitle &&
+      typeof customTitle === "string" &&
+      customTitle.trim() !== ""
+    ) {
+      if (document.title !== customTitle) {
+        document.title = customTitle;
+      }
     } else {
-      // Restore original title if custom title is cleared or empty
-        if (originalPageTitle && document.title !== originalPageTitle) {
-            document.title = originalPageTitle;
-        }
+      if (originalPageTitle && document.title !== originalPageTitle) {
+        document.title = originalPageTitle;
+      }
     }
   }
-
-  /**
-   * **MODIFIED:** Applies custom font URL, family, and size globally.
-   */
-  function applyCustomFont() {
-      // Read settings from localStorage
-      let customFontUrl = localStorage.getItem(settingsKeys.customFontUrl);
-      let customFontFamily = localStorage.getItem(settingsKeys.customFontFamily);
-      let customFontSizeSetting = localStorage.getItem(settingsKeys.customFontSize);
-
-      const styleId = "tweak-custom-font-style";
-      let styleElement = document.getElementById(styleId);
-      let cssRules = []; // Array to hold all CSS rules as strings
-
-      // Ensure the style element exists
-      if (!styleElement) {
-          styleElement = document.createElement("style");
-          styleElement.id = styleId;
-          document.head.appendChild(styleElement);
-      }
-
-      // Clean the retrieved string values
-      const cleanedUrl = cleanValue(customFontUrl);
-      const cleanedFamily = cleanValue(customFontFamily);
-
-      // Parse the font size (stored as JSON number or null)
-      let cleanedSize = null;
-      if (customFontSizeSetting && customFontSizeSetting !== "null") {
-          try {
-              const parsedSize = JSON.parse(customFontSizeSetting);
-              if (typeof parsedSize === 'number' && parsedSize > 0) {
-                  cleanedSize = parsedSize;
-              }
-          } catch(e) {
-               console.error(`${consolePrefix} Error parsing stored font size:`, e);
-          }
-      }
-
-      // 1. Add @import rule if a valid URL is provided
-      if (cleanedUrl) {
-          if (cleanedUrl.startsWith("http://") || cleanedUrl.startsWith("https://")) {
-              // Ensure the URL is properly escaped within the CSS string
-              const escapedUrl = cleanedUrl.replace(/'/g, "\\'"); // Basic escaping
-              cssRules.push(`@import url('${escapedUrl}');`);
-          } else {
-              console.warn(`${consolePrefix} Invalid custom font URL provided: ${cleanedUrl}. Must start with http:// or https://`);
-          }
-      }
-
-      // 2. Build the main CSS rule targeting key elements
-      let globalCssProps = [];
-      if (cleanedFamily && cleanedFamily.trim() !== "") {
-          let fontFamilyValue = cleanedFamily.trim();
-          // Add quotes if the family name contains spaces and isn't already quoted
-          if (fontFamilyValue.includes(" ") && !fontFamilyValue.startsWith("'") && !fontFamilyValue.startsWith('"')) {
-              fontFamilyValue = `'${fontFamilyValue}'`;
-          }
-          // Include common fallbacks
-          globalCssProps.push(`  font-family: ${fontFamilyValue}, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" !important;`);
-      }
-
-      if (cleanedSize !== null && cleanedSize > 0) {
-           globalCssProps.push(`  font-size: ${cleanedSize}px !important;`);
-      }
-
-      // Combine properties into the main rule string if any exist
-      if (globalCssProps.length > 0) {
-            // Apply to body and force inheritance for common elements
-          cssRules.push(`
-body {
-${globalCssProps.join("\n")}
-}
-
-/* Attempt to force inheritance on potentially overridden elements */
-button, input, select, textarea, div, span, p, li, h1, h2, h3, h4, h5, h6, label, a, code, pre {
-    ${cleanedFamily ? `font-family: inherit !important;` : ''}
-    ${cleanedSize !== null ? `font-size: inherit !important; line-height: inherit !important;` : ''}
-}
-
-/* Ensure code blocks use the font if specified, otherwise they might default to monospace */
-${cleanedFamily ?
-`code, pre, .prose code, kbd, samp {
-    font-family: inherit !important; /* Use specified family if set */
-}` :
-`code, pre, .prose code, kbd, samp {
-    /* Keep default monospace if no custom family, but allow size inherit */
-    ${cleanedSize !== null ? 'font-size: inherit !important;' : ''}
-}`
-}
-
-/* Inputs might need specific size setting if base body size isn't enough */
-input, select, textarea, button {
-     ${cleanedSize !== null ? `font-size: ${cleanedSize * 0.95}px !important;` : ''} /* Slightly smaller for inputs often works well */
-}
-          `);
-      }
-
-
-      // 3. Update the style element content
-      const newStyleContent = cssRules.join("\n\n"); // Add newline between rules
-      // Only update DOM if content changed or needs clearing
-      if (styleElement.textContent !== newStyleContent) {
-          styleElement.textContent = newStyleContent;
-          console.log(`${consolePrefix} ${cssRules.length > 0 ? 'Applied' : 'Cleared'} custom font styles.`);
-      }
-  }
-
-
-  // --- Modal UI Creation and Management ---
-
+  applyCustomTitle();
+  let modalOverlay = null;
+  let modalElement = null;
+  let feedbackElement = null;
   function createSettingsModal() {
-    // Avoid creating multiple modals
     if (document.getElementById("tweak-modal-overlay")) return;
-
-    // Inject CSS for the modal
     const styles = `
-      #tweak-modal-overlay { /* Modal Background */
+      #tweak-modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background-color: rgba(0, 0, 0, 0.8); display: none; /* Hidden by default */
+        background-color: rgba(0, 0, 0, 0.8); /* Even darker overlay */
+        display: none; /* Hidden by default */
         justify-content: center; align-items: center; z-index: 10001;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; /* Default UI font */
+        font-family: sans-serif;
       }
-      #tweak-modal { /* Modal Container */
-        background-color: #252525; color: #f0f0f0; padding: 20px 30px; border-radius: 8px;
-        min-width: 400px; max-width: 550px; box-shadow: 0 8px 25px rgba(0,0,0,0.6);
-        border: 1px solid #4a4a4a; display: flex; flex-direction: column; max-height: 90vh; /* Limit height */
+      #tweak-modal {
+        background-color: #252525; /* Very dark grey, near black */
+        color: #f0f0f0;
+        padding: 25px 35px;
+        border-radius: 8px;
+        min-width: 350px;
+        max-width: 500px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.6); /* Stronger shadow */
+        position: relative;
+        border: 1px solid #4a4a4a; /* Subtle light grey border */
       }
-      #tweak-modal h2 { /* Modal Title */
-        margin-top: 0; margin-bottom: 15px; color: #ffffff; font-size: 1.4em; font-weight: 600; text-align: center;
-        border-bottom: 1px solid #4a4a4a; padding-bottom: 15px;
-      }
-      #tweak-modal-feedback { /* Feedback Area */
-        font-size: 0.9em; color: #a0cfff; margin-top: 0px; margin-bottom: 10px; min-height: 1.2em;
-        text-align: center; font-weight: 500;
-      }
-      #tweak-modal-scrollable-content { /* Scrollable Area */
-        overflow-y: auto; overflow-x: hidden; padding-right: 10px; margin-right: -10px;
-        flex-grow: 1; /* Allow content to take available space */
-      }
-      /* Custom Scrollbar Styles (WebKit) */
-      #tweak-modal-scrollable-content::-webkit-scrollbar { width: 8px; }
-      #tweak-modal-scrollable-content::-webkit-scrollbar-track { background: #444; border-radius: 4px; }
-      #tweak-modal-scrollable-content::-webkit-scrollbar-thumb { background-color: #888; border-radius: 4px; border: 2px solid #444; }
-      #tweak-modal-scrollable-content::-webkit-scrollbar-thumb:hover { background-color: #aaa; }
+      #tweak-modal h2 {
+          margin-top: 0; margin-bottom: 20px;
+          color: #ffffff;
+          font-size: 1.5em;
+          font-weight: 600;
+          text-align: center;
+       }
+      #tweak-modal-feedback {
+          font-size: 0.9em;
+          color: #a0cfff;
+          margin-top: 15px;
+          margin-bottom: 5px;
+          min-height: 1.2em;
+          text-align: center;
+          font-weight: 500;
+       }
 
-      .tweak-settings-section { /* Section Container */
-        background-color: #333333; padding: 15px 20px; border-radius: 6px; margin-bottom: 15px;
+      .tweak-settings-section {
+        background-color: #333333; /* Slightly adjusted section background */
+        padding: 20px 25px;
+        border-radius: 6px;
+        margin-top: 10px;
         border: 1px solid #484848;
       }
-       .tweak-settings-section h3 { /* Section Title */
-            margin-top: 0; margin-bottom: 15px; font-size: 1.1em; font-weight: 500; color: #e0e0e0;
-            padding-bottom: 8px; border-bottom: 1px solid #555;
-       }
 
-      /* Checkbox Styles */
-      .tweak-checkbox-item { margin-bottom: 15px; display: flex; align-items: center; }
+      .tweak-checkbox-item { margin-bottom: 18px; display: flex; align-items: center; }
       .tweak-checkbox-item:last-child { margin-bottom: 5px; }
-      .tweak-checkbox-item input[type='checkbox'] { margin-right: 12px; transform: scale(1.1); cursor: pointer; accent-color: #0d6efd; }
-      .tweak-checkbox-item label { cursor: pointer; flex-grow: 1; font-size: 0.95em; color: #e0e0e0; }
 
-      /* Input Item base style (Text, Color, Number) */
-       .tweak-input-item {
-            margin-top: 15px; display: flex; align-items: center; justify-content: space-between;
-            gap: 10px; /* Space between label and input wrapper */
+      .tweak-checkbox-item input[type='checkbox'] {
+          margin-right: 15px;
+          transform: scale(1.2);
+          cursor: pointer;
+          accent-color: #0d6efd; /* Standard Bootstrap blue for check */
+          background-color: #555;
+          border-radius: 3px;
+          border: 1px solid #777;
+          /* Appearance none needed for custom checkmark styling below */
+          appearance: none;
+          -webkit-appearance: none;
+          width: 1.2em;
+          height: 1.2em;
+          position: relative;
        }
-       .tweak-input-item label {
-           flex-shrink: 0; /* Prevent label from shrinking */
-           color: #e0e0e0; font-size: 0.95em; white-space: nowrap;
-        }
-        .tweak-input-wrapper {
-             display: flex; align-items: center; flex-grow: 1; /* Allow input+button to fill space */
-             gap: 8px; /* Space between input and reset button */
-        }
-       .tweak-input-item input[type='text'],
-       .tweak-input-item input[type='number'],
-       .tweak-input-item input[type='color'] {
-           border: 1px solid #777; border-radius: 4px; background-color: #555; color: #f0f0f0;
-           font-size: 0.9em; padding: 6px 10px;
+       /* Custom checkmark */
+       .tweak-checkbox-item input[type='checkbox']::before {
+            content: "✓"; /* Unicode checkmark */
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 1em;
+            font-weight: bold;
+            color: white;
+            transition: transform 0.1s ease-in-out;
+            line-height: 1;
        }
-        .tweak-input-item input[type='text'],
-        .tweak-input-item input[type='number'] {
-            flex-grow: 1; /* Allow text/number input to take available space */
-             min-width: 80px; /* Ensure minimum width */
-        }
-        .tweak-input-item input[type='color'] {
-             width: 45px; height: 32px; cursor: pointer; padding: 2px; flex-shrink: 0;
-        }
-        .tweak-input-item input::placeholder { color: #aaa; opacity: 0.8; }
-
-       /* Reset/Clear Button Style */
-       .tweak-reset-button {
-            background-color: #6c757d; color: white; border: 1px solid #6c757d;
-            padding: 5px 10px; border-radius: 4px; font-size: 0.85em; font-weight: 500;
-            cursor: pointer; transition: background-color 0.2s ease; flex-shrink: 0;
-            line-height: 1; /* Ensure consistent height */
+       .tweak-checkbox-item input[type='checkbox']:checked {
+            background-color: #0d6efd; /* Blue background when checked */
+            border-color: #0d6efd;
        }
-       .tweak-reset-button:hover { background-color: #5a6268; border-color: #545b62; }
+       .tweak-checkbox-item input[type='checkbox']:checked::before {
+            transform: translate(-50%, -50%) scale(1.2); /* Make checkmark visible */
+       }
 
-        /* Font section description */
-        .tweak-font-description {
-            font-size: 0.9em; color: #ccc; margin-bottom: 15px; line-height: 1.4;
-            background-color: rgba(255, 255, 255, 0.05); padding: 8px 12px; border-radius: 4px;
-        }
+      .tweak-checkbox-item label {
+          cursor: pointer;
+          flex-grow: 1;
+          font-size: 1em;
+          color: #e0e0e0;
+      }
 
-
-      /* Modal Footer & Close Button */
+      /* NEW: Footer styling */
       .tweak-modal-footer {
-        margin-top: 20px; padding-top: 15px; border-top: 1px solid #4a4a4a;
-        display: flex; justify-content: flex-end;
+        margin-top: 25px; /* Space above the footer */
+        padding-top: 15px; /* Space above the button */
+        border-top: 1px solid #4a4a4a; /* Separator line */
+        display: flex;
+        justify-content: flex-end; /* Align button to the right */
       }
+
+      /* NEW: Close button styling */
       #tweak-modal-bottom-close {
-        background-color: #dc3545; color: white; border: 1px solid #dc3545;
-        padding: 8px 18px; border-radius: 6px; font-size: 0.95em; font-weight: 500;
-        cursor: pointer; transition: background-color 0.2s ease;
+        background-color: #dc3545; /* Red background (Bootstrap danger) */
+        color: white;
+        border: 1px solid #dc3545;
+        padding: 8px 18px; /* Padding */
+        border-radius: 6px; /* Rounded corners */
+        font-size: 0.95em;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s ease, border-color 0.2s ease;
       }
-      #tweak-modal-bottom-close:hover { background-color: #c82333; border-color: #bd2130; }
+      #tweak-modal-bottom-close:hover {
+        background-color: #c82333; /* Darker red on hover */
+        border-color: #bd2130;
+      }
+
+      /* NEW: Color Picker Styles */
+      .tweak-color-item {
+          margin-top: 20px; /* Space above this section */
+          padding-top: 15px;
+          border-top: 1px solid #4a4a4a; /* Separator line */
+          display: flex;
+          align-items: center;
+          justify-content: space-between; /* Align items */
+       }
+      .tweak-color-item label {
+          margin-right: 10px;
+          color: #e0e0e0;
+          font-size: 1em;
+       }
+       .tweak-color-input-wrapper {
+            display: flex;
+            align-items: center;
+       }
+      .tweak-color-item input[type='color'] {
+          width: 40px;
+          height: 30px;
+          border: 1px solid #777;
+          border-radius: 4px;
+          cursor: pointer;
+          background-color: #555; /* Background for the picker itself */
+          margin-right: 10px;
+          padding: 2px; /* Small padding */
+       }
+       /* Optional: Style the reset button */
+       .tweak-reset-button {
+            background-color: #6c757d; /* Grey background (Bootstrap secondary) */
+            color: white;
+            border: 1px solid #6c757d;
+            padding: 4px 10px; /* Smaller padding */
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+       }
+        .tweak-reset-button:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+       }
+
+      /* NEW: Text Input Styles (similar to color picker) */
+      .tweak-text-item {
+          margin-top: 20px;
+          display: flex;
+          align-items: center;
+      }
+      .tweak-text-item label {
+          color: #e0e0e0;
+          font-size: 1em;
+          white-space: nowrap; /* Prevent label wrapping */
+      }
+      .tweak-text-input-wrapper {
+           display: flex;
+           align-items: center;
+           flex-grow: 1; /* Allow wrapper to take remaining space */
+      }
+      .tweak-text-item input[type='text'] {
+          flex-grow: 1; /* Still try to fill space */
+          flex-shrink: 1; /* Allow shrinking */
+          min-width: 50px; /* Prevent shrinking too much */
+          flex-basis: auto; /* Let browser determine initial size */
+          padding: 6px 10px;
+          border: 1px solid #777;
+          margin-right: 10px;
+          border-radius: 4px;
+          background-color: #555;
+          color: #f0f0f0;
+          font-size: 0.9em;
+      }
+       /* NEW: Placeholder text color */
+       .tweak-text-item input[type='text']::placeholder,
+       .tweak-text-item input[type='number']::placeholder {
+         color: #f0f0f0; /* Match dropdown text color */
+         opacity: 0.7; /* Make placeholder slightly less prominent */
+       }
+
+      /* Reuse tweak-reset-button style for clear button */
+
+      /* NEW: Scrollable Content Area */
+      #tweak-modal-scrollable-content {
+        max-height: calc(80vh - 200px); /* Adjust max height (80% viewport height minus header/footer/padding) */
+        overflow-y: auto; /* Enable vertical scrollbar only when needed */
+        overflow-x: hidden; /* Prevent horizontal scrollbar */
+        padding-right: 15px; /* Space for scrollbar */
+        margin-right: -15px; /* Counteract padding to keep content aligned */
+      }
+
+      /* NEW: Custom Scrollbar Styles (WebKit) */
+      #tweak-modal-scrollable-content::-webkit-scrollbar {
+        width: 8px; /* Width of the scrollbar */
+      }
+      #tweak-modal-scrollable-content::-webkit-scrollbar-track {
+        background: #444; /* Track color */
+        border-radius: 4px;
+      }
+      #tweak-modal-scrollable-content::-webkit-scrollbar-thumb {
+        background-color: #888; /* Handle color */
+        border-radius: 4px;
+        border: 2px solid #444; /* Creates padding around thumb */
+      }
+      #tweak-modal-scrollable-content::-webkit-scrollbar-thumb:hover {
+        background-color: #aaa; /* Handle color on hover */
+      }
+
+      /* Style for section headers */
+      .tweak-section-header {
+        font-size: 1.15em;
+        font-weight: 600;
+        color: #ffffff;
+        margin-top: 5px;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #4a4a4a;
+      }
+      
+      /* NEW: Select dropdown styles */
+      .tweak-select {
+        background-color: #555;
+        color: #f0f0f0;
+        border: 1px solid #777;
+        border-radius: 4px;
+        padding: 6px 10px;
+        font-size: 0.9em;
+        width: 100%;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+      
+      .tweak-select option {
+        background-color: #333;
+        color: #f0f0f0;
+      }
+      
+      /* Font preview box */
+      .font-preview-box {
+        background-color: #444;
+        border: 1px solid #555;
+        border-radius: 4px;
+        padding: 12px;
+        margin-top: 15px;
+        text-align: center;
+      }
+      
+      .font-preview-text {
+        font-size: 1em;
+        color: #fff;
+      }
     `;
     const styleSheet = document.createElement("style");
     styleSheet.innerText = styles;
     document.head.appendChild(styleSheet);
-
-    // Create Modal Structure
     modalOverlay = document.createElement("div");
     modalOverlay.id = "tweak-modal-overlay";
-    modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) toggleModal(false); }); // Close on backdrop click
-
+    modalOverlay.addEventListener("click", (e) => {
+      if (e.target === modalOverlay) {
+        toggleModal(false);
+      }
+    });
     modalElement = document.createElement("div");
     modalElement.id = "tweak-modal";
-
     const header = document.createElement("h2");
-    header.textContent = "TypingMind UI Tweaks";
-
+    header.textContent = "UI Tweaks";
     feedbackElement = document.createElement("p");
     feedbackElement.id = "tweak-modal-feedback";
-    feedbackElement.textContent = " "; // Placeholder for feedback
-
+    feedbackElement.textContent = " ";
     const scrollableContent = document.createElement("div");
     scrollableContent.id = "tweak-modal-scrollable-content";
 
-    // --- Section 1: Visibility Toggles ---
-    const visibilitySection = document.createElement("div");
-    visibilitySection.className = "tweak-settings-section";
-    const visibilityHeader = document.createElement("h3");
-    visibilityHeader.textContent = "Hide UI Elements";
-    visibilitySection.appendChild(visibilityHeader);
-
-    const visibilitySettings = [
+    const settingsSection = document.createElement("div");
+    settingsSection.className = "tweak-settings-section";
+    const checkboxContainer = document.createElement("div");
+    
+    // Create visible section header
+    const visibilityHeader = document.createElement("div");
+    visibilityHeader.className = "tweak-section-header";
+    visibilityHeader.textContent = "UI Element Visibility";
+    settingsSection.appendChild(visibilityHeader);
+    
+    const settings = [
       { key: settingsKeys.hideTeams, label: "Hide 'Teams' menu item" },
       { key: settingsKeys.hideKB, label: "Hide 'KB' menu item" },
-      { key: settingsKeys.hideLogo, label: "Hide Logo & Announcement" },
+      { key: settingsKeys.hideLogo, label: "Hide Logo & Announcement section" },
       { key: settingsKeys.hideProfile, label: "Hide 'Profile' button" },
-      { key: settingsKeys.hideChatProfiles, label: "Hide 'Chat Profiles' button" },
-      { key: settingsKeys.hidePinnedChars, label: "Hide 'Characters' in New Chat" },
-      { key: settingsKeys.showModalButton, label: "Show 'Tweaks' Button in Menu", defaultValue: true },
+      {
+        key: settingsKeys.hideChatProfiles,
+        label: "Hide 'Chat Profiles' button",
+      },
+      {
+        key: settingsKeys.hidePinnedChars,
+        label: "Hide 'Characters' in New Chat",
+      },
+      {
+        key: settingsKeys.showModalButton,
+        label: "Show 'Tweaks' Button in Menu",
+        defaultValue: true,
+      },
     ];
-
-    visibilitySettings.forEach(setting => {
+    settings.forEach((setting) => {
       const itemDiv = document.createElement("div");
       itemDiv.className = "tweak-checkbox-item";
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
       checkbox.id = setting.key;
-      checkbox.checked = getSetting(setting.key, setting.defaultValue === true); // Use saved or default value
-      checkbox.addEventListener("change", (event) => saveSetting(setting.key, event.target.checked));
+      checkbox.name = setting.key;
+      checkbox.checked = getSetting(setting.key, setting.defaultValue === true);
+      checkbox.addEventListener("change", (event) =>
+        saveSetting(setting.key, event.target.checked)
+      );
       const label = document.createElement("label");
       label.htmlFor = setting.key;
       label.textContent = setting.label;
       itemDiv.appendChild(checkbox);
       itemDiv.appendChild(label);
-      visibilitySection.appendChild(itemDiv);
+      checkboxContainer.appendChild(itemDiv);
     });
-    scrollableContent.appendChild(visibilitySection);
-
-
-    // --- Section 2: Color Customization ---
-    const colorSection = document.createElement("div");
-    colorSection.className = "tweak-settings-section";
-     const colorHeader = document.createElement("h3");
-     colorHeader.textContent = "Color Customization";
-     colorSection.appendChild(colorHeader);
-
-    // Helper to create a color input row
-    const createColorInput = (id, labelText, settingKey, defaultValueVisual) => {
-        const itemDiv = document.createElement("div");
-        itemDiv.className = "tweak-input-item";
-
-        const label = document.createElement("label");
-        label.htmlFor = id;
-        label.textContent = labelText;
-
-        const inputWrapper = document.createElement("div");
-        inputWrapper.className = "tweak-input-wrapper";
-
-        const colorInput = document.createElement("input");
-        colorInput.type = "color";
-        colorInput.id = id;
-        colorInput.value = getSetting(settingKey, null) || defaultValueVisual; // Use saved or visual default
-        colorInput.addEventListener("input", (event) => saveSetting(settingKey, event.target.value));
-
-        const resetButton = document.createElement("button");
-        resetButton.textContent = "Reset";
-        resetButton.className = "tweak-reset-button";
-        resetButton.type = "button";
-        resetButton.addEventListener("click", () => {
-            saveSetting(settingKey, null); // Save null to clear
-            colorInput.value = defaultValueVisual; // Reset input visually
-        });
-
-        inputWrapper.appendChild(colorInput);
-        inputWrapper.appendChild(resetButton);
-        itemDiv.appendChild(label);
-        itemDiv.appendChild(inputWrapper);
-        return itemDiv;
-    };
-
-    colorSection.appendChild(createColorInput("tweak_newChatButtonColor_input", "New Chat Button:", settingsKeys.newChatButtonColor, defaultNewChatButtonColor));
-    colorSection.appendChild(createColorInput("tweak_workspaceIconColor_input", "Menu Icons:", settingsKeys.workspaceIconColor, defaultWorkspaceIconColorVisual));
-    colorSection.appendChild(createColorInput("tweak_workspaceFontColor_input", "Menu Font:", settingsKeys.workspaceFontColor, defaultWorkspaceFontColorVisual));
-    scrollableContent.appendChild(colorSection);
-
-
-    // --- Section 3: General UI ---
-     const generalSection = document.createElement("div");
-     generalSection.className = "tweak-settings-section";
-     const generalHeader = document.createElement("h3");
-     generalHeader.textContent = "General";
-     generalSection.appendChild(generalHeader);
-
-    // Custom Page Title Input
-    const customTitleItem = document.createElement("div");
-    customTitleItem.className = "tweak-input-item";
+    settingsSection.appendChild(checkboxContainer);
+    
+    // Colors section header
+    const colorsHeader = document.createElement("div");
+    colorsHeader.className = "tweak-section-header";
+    colorsHeader.textContent = "UI Colors";
+    colorsHeader.style.marginTop = "25px";
+    settingsSection.appendChild(colorsHeader);
+    
+    const colorPickerSection = document.createElement("div");
+    colorPickerSection.className = "tweak-color-item";
+    const colorLabel = document.createElement("label");
+    colorLabel.htmlFor = "tweak_newChatButtonColor_input";
+    colorLabel.textContent = "New Chat Button Color:";
+    const colorInputWrapper = document.createElement("div");
+    colorInputWrapper.className = "tweak-color-input-wrapper";
+    const colorInput = document.createElement("input");
+    colorInput.type = "color";
+    colorInput.id = "tweak_newChatButtonColor_input";
+    colorInput.addEventListener("input", (event) => {
+      saveSetting(settingsKeys.newChatButtonColor, event.target.value);
+    });
+    const resetButton = document.createElement("button");
+    resetButton.textContent = "Reset";
+    resetButton.className = "tweak-reset-button";
+    resetButton.type = "button";
+    resetButton.addEventListener("click", () => {
+      saveSetting(settingsKeys.newChatButtonColor, null);
+      colorInput.value = defaultNewChatButtonColor;
+    });
+    colorInputWrapper.appendChild(colorInput);
+    colorInputWrapper.appendChild(resetButton);
+    colorPickerSection.appendChild(colorLabel);
+    colorPickerSection.appendChild(colorInputWrapper);
+    const wsIconColorPickerSection = document.createElement("div");
+    wsIconColorPickerSection.className = "tweak-color-item";
+    const wsIconColorLabel = document.createElement("label");
+    wsIconColorLabel.htmlFor = "tweak_workspaceIconColor_input";
+    wsIconColorLabel.textContent = "Menu Icon Color:";
+    const wsIconColorInputWrapper = document.createElement("div");
+    wsIconColorInputWrapper.className = "tweak-color-input-wrapper";
+    const wsIconColorInput = document.createElement("input");
+    wsIconColorInput.type = "color";
+    wsIconColorInput.id = "tweak_workspaceIconColor_input";
+    wsIconColorInput.addEventListener("input", (event) => {
+      saveSetting(settingsKeys.workspaceIconColor, event.target.value);
+    });
+    const wsIconResetButton = document.createElement("button");
+    wsIconResetButton.textContent = "Reset";
+    wsIconResetButton.className = "tweak-reset-button";
+    wsIconResetButton.type = "button";
+    wsIconResetButton.addEventListener("click", () => {
+      saveSetting(settingsKeys.workspaceIconColor, null);
+      wsIconColorInput.value = defaultWorkspaceIconColorVisual;
+    });
+    wsIconColorInputWrapper.appendChild(wsIconColorInput);
+    wsIconColorInputWrapper.appendChild(wsIconResetButton);
+    wsIconColorPickerSection.appendChild(wsIconColorLabel);
+    wsIconColorPickerSection.appendChild(wsIconColorInputWrapper);
+    const wsFontColorPickerSection = document.createElement("div");
+    wsFontColorPickerSection.className = "tweak-color-item";
+    const wsFontColorLabel = document.createElement("label");
+    wsFontColorLabel.htmlFor = "tweak_workspaceFontColor_input";
+    wsFontColorLabel.textContent = "Menu Font Color:";
+    const wsFontColorInputWrapper = document.createElement("div");
+    wsFontColorInputWrapper.className = "tweak-color-input-wrapper";
+    const wsFontColorInput = document.createElement("input");
+    wsFontColorInput.type = "color";
+    wsFontColorInput.id = "tweak_workspaceFontColor_input";
+    wsFontColorInput.addEventListener("input", (event) => {
+      saveSetting(settingsKeys.workspaceFontColor, event.target.value);
+    });
+    const wsFontResetButton = document.createElement("button");
+    wsFontResetButton.textContent = "Reset";
+    wsFontResetButton.className = "tweak-reset-button";
+    wsFontResetButton.type = "button";
+    wsFontResetButton.addEventListener("click", () => {
+      saveSetting(settingsKeys.workspaceFontColor, null);
+      wsFontColorInput.value = defaultWorkspaceFontColorVisual;
+    });
+    wsFontColorInputWrapper.appendChild(wsFontColorInput);
+    wsFontColorInputWrapper.appendChild(wsFontResetButton);
+    wsFontColorPickerSection.appendChild(wsFontColorLabel);
+    wsFontColorPickerSection.appendChild(wsFontColorInputWrapper);
+    
+    // Title section header
+    const titleHeader = document.createElement("div");
+    titleHeader.className = "tweak-section-header";
+    titleHeader.textContent = "Page Title";
+    titleHeader.style.marginTop = "25px"; 
+    settingsSection.appendChild(titleHeader);
+    
+    const customTitleSection = document.createElement("div");
+    customTitleSection.className = "tweak-text-item";
     const titleLabel = document.createElement("label");
     titleLabel.htmlFor = "tweak_customPageTitle_input";
-    titleLabel.textContent = "Page Title:";
+    titleLabel.textContent = "Custom Page Title:";
+    titleLabel.style.marginRight = "10px";
     const titleInputWrapper = document.createElement("div");
-    titleInputWrapper.className = "tweak-input-wrapper";
+    titleInputWrapper.className = "tweak-text-input-wrapper";
     const titleInput = document.createElement("input");
     titleInput.type = "text";
     titleInput.id = "tweak_customPageTitle_input";
-    titleInput.placeholder = "Enter custom page title";
-    titleInput.value = cleanValue(localStorage.getItem(settingsKeys.customPageTitle)) || ""; // Load existing
+    titleInput.placeholder = "Custom Page Title";
     titleInput.addEventListener("input", (event) => {
-        // Save raw value, applyCustomTitle will clean it
-        localStorage.setItem(settingsKeys.customPageTitle, event.target.value);
-        applyCustomTitle(); // Apply immediately
-        if (feedbackElement) feedbackElement.textContent = "Settings saved.";
+      localStorage.setItem(
+        settingsKeys.customPageTitle,
+        event.target.value || ""
+      );
+      applyCustomTitle();
+      if (feedbackElement) feedbackElement.textContent = "Settings saved.";
     });
     const clearTitleButton = document.createElement("button");
     clearTitleButton.textContent = "Clear";
     clearTitleButton.className = "tweak-reset-button";
     clearTitleButton.type = "button";
     clearTitleButton.addEventListener("click", () => {
-        localStorage.removeItem(settingsKeys.customPageTitle); // Remove from storage
-        titleInput.value = ""; // Clear input
-        applyCustomTitle(); // Apply (will restore original)
-        if (feedbackElement) feedbackElement.textContent = "Settings saved.";
+      localStorage.removeItem(settingsKeys.customPageTitle);
+      titleInput.value = "";
+      applyCustomTitle();
+      if (feedbackElement) feedbackElement.textContent = "Settings saved.";
     });
     titleInputWrapper.appendChild(titleInput);
     titleInputWrapper.appendChild(clearTitleButton);
-    customTitleItem.appendChild(titleLabel);
-    customTitleItem.appendChild(titleInputWrapper);
-    generalSection.appendChild(customTitleItem);
-    scrollableContent.appendChild(generalSection);
-
-
-    // --- Section 4: Font Settings ---
-    const fontSection = document.createElement("div");
-    fontSection.className = "tweak-settings-section";
-    const fontHeader = document.createElement("h3");
-    fontHeader.textContent = "Global Font Settings";
-    fontSection.appendChild(fontHeader);
-
-    // **MODIFIED** Description
+    customTitleSection.appendChild(titleLabel);
+    customTitleSection.appendChild(titleInputWrapper);
+    
+    settingsSection.appendChild(colorPickerSection);
+    settingsSection.appendChild(wsIconColorPickerSection);
+    settingsSection.appendChild(wsFontColorPickerSection);
+    settingsSection.appendChild(customTitleSection);
+    
+    // Font settings container with enhanced options
+    const fontSettingsContainer = document.createElement("div");
+    fontSettingsContainer.className = "tweak-settings-section";
+    
+    // Font settings header
+    const fontHeader = document.createElement("div");
+    fontHeader.className = "tweak-section-header";
+    fontHeader.textContent = "Font Customization";
+    fontSettingsContainer.appendChild(fontHeader);
+    
     const fontDescription = document.createElement("p");
-    fontDescription.className = "tweak-font-description";
-    fontDescription.innerHTML = "<b>Apply a custom font to the entire TypingMind interface.</b><br>Font URL (e.g., from Google Fonts) should include desired weights. Font Family Name must match the font.";
-    fontSection.appendChild(fontDescription);
+    fontDescription.textContent =
+      "Customize the application font. For Google Fonts, use the URL from the embed code.";
+    fontDescription.style.marginBottom = "15px";
+    fontDescription.style.fontSize = "0.9em";
+    fontDescription.style.color = "#ccc";
+    fontSettingsContainer.appendChild(fontDescription);
+    
+    // Toggle to apply font to the entire UI
+    const applyToEntireUIDiv = document.createElement("div");
+    applyToEntireUIDiv.className = "tweak-checkbox-item";
+    const applyToEntireUICheckbox = document.createElement("input");
+    applyToEntireUICheckbox.type = "checkbox";
+    applyToEntireUICheckbox.id = settingsKeys.applyFontToEntireUI;
+    applyToEntireUICheckbox.name = settingsKeys.applyFontToEntireUI;
+    applyToEntireUICheckbox.checked = getSetting(settingsKeys.applyFontToEntireUI, true);
+    applyToEntireUICheckbox.addEventListener("change", (event) => {
+      saveSetting(settingsKeys.applyFontToEntireUI, event.target.checked);
+      applyCustomFont(); // Apply changes immediately
+    });
+    const applyToEntireUILabel = document.createElement("label");
+    applyToEntireUILabel.htmlFor = settingsKeys.applyFontToEntireUI;
+    applyToEntireUILabel.textContent = "Apply font to entire UI (not just chat)";
+    applyToEntireUIDiv.appendChild(applyToEntireUICheckbox);
+    applyToEntireUIDiv.appendChild(applyToEntireUILabel);
+    fontSettingsContainer.appendChild(applyToEntireUIDiv);
+    
+    const customFontSection = document.createElement("div");
+    customFontSection.className = "tweak-text-item";
+    const fontLabel = document.createElement("label");
+    fontLabel.htmlFor = "tweak_customFontUrl_input";
+    fontLabel.textContent = "Font URL:";
+    fontLabel.style.marginRight = "10px";
+    const fontInputWrapper = document.createElement("div");
+    fontInputWrapper.className = "tweak-text-input-wrapper";
+    const fontInput = document.createElement("input");
+    fontInput.type = "text";
+    fontInput.id = "tweak_customFontUrl_input";
+    fontInput.placeholder = "Font URL (e.g., Google Fonts)";
+    fontInput.addEventListener("input", (event) => {
+      saveSetting(settingsKeys.customFontUrl, event.target.value || null);
+      updateFontPreview();
+      if (feedbackElement) feedbackElement.textContent = "Settings saved.";
+    });
+    const clearFontButton = document.createElement("button");
+    clearFontButton.textContent = "Clear";
+    clearFontButton.className = "tweak-reset-button";
+    clearFontButton.type = "button";
+    clearFontButton.addEventListener("click", () => {
+      saveSetting(settingsKeys.customFontUrl, null);
+      fontInput.value = "";
+      updateFontPreview();
+      if (feedbackElement) feedbackElement.textContent = "Settings saved.";
+    });
+    fontInputWrapper.appendChild(fontInput);
+    fontInputWrapper.appendChild(clearFontButton);
+    customFontSection.appendChild(fontLabel);
+    customFontSection.appendChild(fontInputWrapper);
+    
+    const fontFamilySection = document.createElement("div");
+    fontFamilySection.className = "tweak-text-item";
+    const fontFamilyLabel = document.createElement("label");
+    fontFamilyLabel.htmlFor = "tweak_customFontFamily_input";
+    fontFamilyLabel.textContent = "Font Family:";
+    fontFamilyLabel.style.marginRight = "10px";
+    const fontFamilyInputWrapper = document.createElement("div");
+    fontFamilyInputWrapper.className = "tweak-text-input-wrapper";
+    const fontFamilyInput = document.createElement("input");
+    fontFamilyInput.type = "text";
+    fontFamilyInput.id = "tweak_customFontFamily_input";
+    fontFamilyInput.placeholder = "Font Family Name (e.g., 'Roboto')";
+    fontFamilyInput.addEventListener("input", (event) => {
+      saveSetting(settingsKeys.customFontFamily, event.target.value || null);
+      updateFontPreview();
+      if (feedbackElement) feedbackElement.textContent = "Settings saved.";
+    });
+    const clearFontFamilyButton = document.createElement("button");
+    clearFontFamilyButton.textContent = "Clear";
+    clearFontFamilyButton.className = "tweak-reset-button";
+    clearFontFamilyButton.type = "button";
+    clearFontFamilyButton.addEventListener("click", () => {
+      saveSetting(settingsKeys.customFontFamily, null);
+      fontFamilyInput.value = "";
+      updateFontPreview();
+      if (feedbackElement) feedbackElement.textContent = "Settings saved.";
+    });
+    fontFamilyInputWrapper.appendChild(fontFamilyInput);
+    fontFamilyInputWrapper.appendChild(clearFontFamilyButton);
+    fontFamilySection.appendChild(fontFamilyLabel);
+    fontFamilySection.appendChild(fontFamilyInputWrapper);
+    
+    const fontSizeSection = document.createElement("div");
+    fontSizeSection.className = "tweak-text-item";
+    const fontSizeLabel = document.createElement("label");
+    fontSizeLabel.htmlFor = "tweak_customFontSize_input";
+    fontSizeLabel.textContent = "Font Size (px):";
+    fontSizeLabel.style.marginRight = "10px";
+    const fontSizeInputWrapper = document.createElement("div");
+    fontSizeInputWrapper.className = "tweak-text-input-wrapper";
+    const fontSizeInput = document.createElement("input");
+    fontSizeInput.type = "number";
+    fontSizeInput.id = "tweak_customFontSize_input";
+    fontSizeInput.placeholder = "Font Size (px)";
+    fontSizeInput.min = "8";
+    fontSizeInput.step = "1";
+    fontSizeInput.style.flexGrow = "1";
+    fontSizeInput.style.padding = "6px 10px";
+    fontSizeInput.style.border = "1px solid #777";
+    fontSizeInput.style.borderRadius = "4px";
+    fontSizeInput.style.backgroundColor = "#555";
+    fontSizeInput.style.color = "#f0f0f0";
+    fontSizeInput.style.fontSize = "0.9em";
+    fontSizeInput.style.marginRight = "10px";
 
-    // Helper to create a text/number input row
-    const createTextInput = (id, labelText, settingKey, placeholder, inputType = "text", attributes = {}) => {
-        const itemDiv = document.createElement("div");
-        itemDiv.className = "tweak-input-item";
-        const label = document.createElement("label");
-        label.htmlFor = id;
-        label.textContent = labelText;
-        const inputWrapper = document.createElement("div");
-        inputWrapper.className = "tweak-input-wrapper";
-        const input = document.createElement("input");
-        input.type = inputType;
-        input.id = id;
-        input.placeholder = placeholder;
-        Object.entries(attributes).forEach(([key, value]) => input.setAttribute(key, value)); // Set min, step etc.
-
-        // Load current value
-        const storedValueRaw = localStorage.getItem(settingKey);
-        let storedValue = cleanValue(storedValueRaw); // Clean strings
-         if (inputType === 'number' && storedValue !== null && storedValue !== "null" && storedValue !== "") {
-             try {
-                storedValue = JSON.parse(storedValueRaw); // Get number back
-             } catch { storedValue = "";} // Reset if parse fails
-         }
-        input.value = (storedValue !== null) ? String(storedValue) : ""; // Set input value as string
-
-
-        // Input event listener
-        input.addEventListener("input", (event) => {
-            let valueToSave = event.target.value; // Start with raw value
-             if (inputType === 'number') {
-                 const rawValue = event.target.value.trim();
-                 if (rawValue === "") {
-                     valueToSave = null; // Treat empty as null
-                 } else {
-                     const potentialNum = parseInt(rawValue, 10);
-                      const min = parseInt(input.min || "1", 10); // Use min attribute or default 1
-                     if (!isNaN(potentialNum) && potentialNum >= min) {
-                         valueToSave = potentialNum; // Save valid number
-                     } else {
-                         // Invalid number input - what to do? Maybe prevent saving?
-                          console.warn(`${consolePrefix} Invalid ${labelText} input: ${rawValue}`);
-                          // For now, we might let saveSetting handle it or just show feedback
-                          if (feedbackElement) feedbackElement.textContent = `Invalid ${labelText}. Must be >= ${min}.`;
-                          // Don't proceed with saving invalid number by returning early
-                           // Note: This doesn't save, the invalid text remains in the input.
-                           // A better UX might clear it or revert, but requires more complex state management.
-                           // Let's just *not* save the invalid state. The *next* valid input will save.
-                           return; // Stop processing this event
-                     }
-                 }
-             } else { // For text inputs
-                 valueToSave = valueToSave || null; // Treat empty string as null for consistency
-             }
-
-             // Check if value actually changed before saving
-              const currentStored = localStorage.getItem(settingKey);
-              const currentStoredJson = currentStored ? JSON.stringify(valueToSave) : null; // Prepare for comparison
-
-             // Compare stored string with new stringified value, or check if both are effectively null/empty
-             if ( (currentStored === null && valueToSave !== null) || // Was null, now has value
-                  (currentStored !== null && valueToSave === null) || // Had value, now null
-                  (currentStored !== null && valueToSave !== null && currentStored !== JSON.stringify(valueToSave)) // Both have value, but different
-                ) {
-                     saveSetting(settingKey, valueToSave); // Save the number, null, or string
-                    // Clear specific feedback on successful save
-                    if (feedbackElement && feedbackElement.textContent.startsWith('Invalid')) {
-                       feedbackElement.textContent = "Settings saved.";
-                    } else if (feedbackElement) {
-                         feedbackElement.textContent = "Settings saved.";
-                    }
-             }
-
-        });
-
-        // Clear button
-        const clearButton = document.createElement("button");
-        clearButton.textContent = "Clear";
-        clearButton.className = "tweak-reset-button";
-        clearButton.type = "button";
-        clearButton.addEventListener("click", () => {
-             if (localStorage.getItem(settingKey) !== null) { // Only save if not already null
-                saveSetting(settingKey, null); // Save null
-                if (feedbackElement) feedbackElement.textContent = "Settings saved.";
-             }
-            input.value = ""; // Clear input visually
-        });
-
-        inputWrapper.appendChild(input);
-        inputWrapper.appendChild(clearButton);
-        itemDiv.appendChild(label);
-        itemDiv.appendChild(inputWrapper);
-        return itemDiv;
-    };
-
-    fontSection.appendChild(createTextInput("tweak_customFontUrl_input", "Font URL:", settingsKeys.customFontUrl, "https://... (e.g., Google Fonts)"));
-    fontSection.appendChild(createTextInput("tweak_customFontFamily_input", "Font Family:", settingsKeys.customFontFamily, "e.g., 'Roboto', 'Inter'"));
-    fontSection.appendChild(createTextInput("tweak_customFontSize_input", "Font Size (px):", settingsKeys.customFontSize, "e.g., 14", "number", { min: "8", step: "1" }));
-    scrollableContent.appendChild(fontSection);
-
-
-    // --- Modal Footer ---
+    fontSizeInput.addEventListener("input", (event) => {
+      const valueToSave = event.target.value
+        ? parseInt(event.target.value, 10)
+        : null;
+      if (
+        valueToSave !== null &&
+        valueToSave >= parseInt(fontSizeInput.min, 10)
+      ) {
+        saveSetting(settingsKeys.customFontSize, valueToSave);
+        updateFontPreview();
+      } else if (valueToSave === null) {
+        saveSetting(settingsKeys.customFontSize, null);
+        updateFontPreview();
+      } else {
+      }
+      if (feedbackElement) feedbackElement.textContent = "Settings saved.";
+    });
+    const clearFontSizeButton = document.createElement("button");
+    clearFontSizeButton.textContent = "Clear";
+    clearFontSizeButton.className = "tweak-reset-button";
+    clearFontSizeButton.type = "button";
+    clearFontSizeButton.addEventListener("click", () => {
+      saveSetting(settingsKeys.customFontSize, null);
+      fontSizeInput.value = "";
+      updateFontPreview();
+      if (feedbackElement) feedbackElement.textContent = "Settings saved.";
+    });
+    fontSizeInputWrapper.appendChild(fontSizeInput);
+    fontSizeInputWrapper.appendChild(clearFontSizeButton);
+    fontSizeSection.appendChild(fontSizeLabel);
+    fontSizeSection.appendChild(fontSizeInputWrapper);
+    
+    // Add font weight selector
+    const fontWeightSection = document.createElement("div");
+    fontWeightSection.className = "tweak-text-item";
+    const fontWeightLabel = document.createElement("label");
+    fontWeightLabel.htmlFor = "tweak_customFontWeight_input";
+    fontWeightLabel.textContent = "Font Weight:";
+    fontWeightLabel.style.marginRight = "10px";
+    const fontWeightInputWrapper = document.createElement("div");
+    fontWeightInputWrapper.className = "tweak-text-input-wrapper";
+    const fontWeightSelect = document.createElement("select");
+    fontWeightSelect.id = "tweak_customFontWeight_input";
+    fontWeightSelect.className = "tweak-select";
+    
+    // Add weight options
+    const weightOptions = [
+      { value: "", label: "Default" },
+      { value: "100", label: "Thin (100)" },
+      { value: "200", label: "Extra Light (200)" },
+      { value: "300", label: "Light (300)" },
+      { value: "400", label: "Regular (400)" },
+      { value: "500", label: "Medium (500)" },
+      { value: "600", label: "Semi Bold (600)" },
+      { value: "700", label: "Bold (700)" },
+      { value: "800", label: "Extra Bold (800)" },
+      { value: "900", label: "Black (900)" }
+    ];
+    
+    weightOptions.forEach(option => {
+      const optElement = document.createElement("option");
+      optElement.value = option.value;
+      optElement.textContent = option.label;
+      fontWeightSelect.appendChild(optElement);
+    });
+    
+    fontWeightSelect.addEventListener("change", (event) => {
+      const value = event.target.value || null;
+      saveSetting(settingsKeys.customFontWeight, value);
+      updateFontPreview();
+      if (feedbackElement) feedbackElement.textContent = "Settings saved.";
+    });
+    
+    fontWeightInputWrapper.appendChild(fontWeightSelect);
+    fontWeightSection.appendChild(fontWeightLabel);
+    fontWeightSection.appendChild(fontWeightInputWrapper);
+    
+    // Font preview box
+    const fontPreviewBox = document.createElement("div");
+    fontPreviewBox.className = "font-preview-box";
+    fontPreviewBox.id = "font-preview-box";
+    
+    const previewText = document.createElement("div");
+    previewText.className = "font-preview-text";
+    previewText.id = "font-preview-text";
+    previewText.textContent = "This is a preview of your selected font";
+    
+    fontPreviewBox.appendChild(previewText);
+    
+    // Function to update the font preview
+    function updateFontPreview() {
+      const fontFamily = cleanValue(localStorage.getItem(settingsKeys.customFontFamily)) || "inherit";
+      const fontSize = getSetting(settingsKeys.customFontSize, null) || "inherit";
+      const fontWeight = getSetting(settingsKeys.customFontWeight, null) || "inherit";
+      
+      const previewElement = document.getElementById("font-preview-text");
+      if (previewElement) {
+        if (fontFamily && fontFamily !== "inherit") {
+          previewElement.style.fontFamily = fontFamily.includes(" ") ? `'${fontFamily}'` : fontFamily;
+        } else {
+          previewElement.style.fontFamily = "inherit";
+        }
+        
+        previewElement.style.fontSize = fontSize !== "inherit" ? `${fontSize}px` : "inherit";
+        previewElement.style.fontWeight = fontWeight;
+      }
+    }
+    
+    fontSettingsContainer.appendChild(customFontSection);
+    fontSettingsContainer.appendChild(fontFamilySection);
+    fontSettingsContainer.appendChild(fontSizeSection);
+    fontSettingsContainer.appendChild(fontWeightSection);
+    fontSettingsContainer.appendChild(fontPreviewBox);
+    
+    scrollableContent.appendChild(settingsSection);
+    scrollableContent.appendChild(fontSettingsContainer);
+    
     const footer = document.createElement("div");
     footer.className = "tweak-modal-footer";
     const closeButtonBottom = document.createElement("button");
@@ -697,266 +955,460 @@ input, select, textarea, button {
     closeButtonBottom.textContent = "Close";
     closeButtonBottom.addEventListener("click", () => toggleModal(false));
     footer.appendChild(closeButtonBottom);
-
-    // Assemble Modal
     modalElement.appendChild(header);
     modalElement.appendChild(feedbackElement);
-    modalElement.appendChild(scrollableContent); // Add scrollable content area
+    modalElement.appendChild(scrollableContent);
     modalElement.appendChild(footer);
     modalOverlay.appendChild(modalElement);
     document.body.appendChild(modalOverlay);
-
-     console.log(`${consolePrefix} Settings modal created.`);
   }
-
-
   function loadSettingsIntoModal() {
-    if (!modalElement) {
-         console.warn(`${consolePrefix} Modal element not found during loadSettingsIntoModal.`);
-         return;
-    }
-
-    // Load checkbox values
-    const checkboxSettings = [
-        settingsKeys.hideTeams, settingsKeys.hideKB, settingsKeys.hideLogo,
-        settingsKeys.hideProfile, settingsKeys.hideChatProfiles, settingsKeys.hidePinnedChars,
-        settingsKeys.showModalButton
+    if (!modalElement) return;
+    const settingsMetadata = [
+      { key: settingsKeys.hideTeams, defaultValue: false },
+      { key: settingsKeys.hideKB, defaultValue: false },
+      { key: settingsKeys.hideLogo, defaultValue: false },
+      { key: settingsKeys.hideProfile, defaultValue: false },
+      { key: settingsKeys.hideChatProfiles, defaultValue: false },
+      { key: settingsKeys.hidePinnedChars, defaultValue: false },
+      { key: settingsKeys.showModalButton, defaultValue: true },
+      { key: settingsKeys.applyFontToEntireUI, defaultValue: true },
     ];
-     const defaultValues = { // Match defaults from creation
-        [settingsKeys.showModalButton]: true
-     };
-
-    checkboxSettings.forEach(key => {
+    settingsMetadata.forEach(({ key, defaultValue }) => {
+      if (
+        key !== settingsKeys.newChatButtonColor &&
+        key !== settingsKeys.workspaceIconColor &&
+        key !== settingsKeys.workspaceFontColor &&
+        key !== settingsKeys.customPageTitle
+      ) {
         const checkbox = document.getElementById(key);
         if (checkbox) {
-            checkbox.checked = getSetting(key, defaultValues[key] || false);
+          checkbox.checked = getSetting(key, defaultValue);
         } else {
-            console.warn(`${consolePrefix} Checkbox element not found for ID: ${key}`);
+          console.warn(
+            `${consolePrefix} Checkbox element not found for ID: ${key}`
+          );
         }
+      }
     });
-
-    // Load color picker values
-    const colorInputs = [
-        { id: "tweak_newChatButtonColor_input", key: settingsKeys.newChatButtonColor, default: defaultNewChatButtonColor },
-        { id: "tweak_workspaceIconColor_input", key: settingsKeys.workspaceIconColor, default: defaultWorkspaceIconColorVisual },
-        { id: "tweak_workspaceFontColor_input", key: settingsKeys.workspaceFontColor, default: defaultWorkspaceFontColorVisual },
-    ];
-    colorInputs.forEach(({ id, key, default: defaultValue }) => {
-        const input = document.getElementById(id);
-        if (input) {
-            input.value = getSetting(key, null) || defaultValue;
-        } else {
-             console.warn(`${consolePrefix} Color input element not found for ID: ${id}`);
+    const newChatColorInput = document.getElementById(
+      "tweak_newChatButtonColor_input"
+    );
+    if (newChatColorInput) {
+      const storedNewChatColor = getSetting(
+        settingsKeys.newChatButtonColor,
+        null
+      );
+      newChatColorInput.value = storedNewChatColor
+        ? storedNewChatColor
+        : defaultNewChatButtonColor;
+    }
+    const wsIconColorInput = document.getElementById(
+      "tweak_workspaceIconColor_input"
+    );
+    if (wsIconColorInput) {
+      const storedWsIconColor = getSetting(
+        settingsKeys.workspaceIconColor,
+        null
+      );
+      wsIconColorInput.value = storedWsIconColor
+        ? storedWsIconColor
+        : defaultWorkspaceIconColorVisual;
+    }
+    const wsFontColorInput = document.getElementById(
+      "tweak_workspaceFontColor_input"
+    );
+    if (wsFontColorInput) {
+      const storedWsFontColor = getSetting(
+        settingsKeys.workspaceFontColor,
+        null
+      );
+      wsFontColorInput.value = storedWsFontColor
+        ? storedWsFontColor
+        : defaultWorkspaceFontColorVisual;
+    }
+    const titleInput = document.getElementById("tweak_customPageTitle_input");
+    if (titleInput) {
+      const storedTitle =
+        localStorage.getItem(settingsKeys.customPageTitle) || "";
+      titleInput.value = storedTitle;
+    }
+    const fontInput = document.getElementById("tweak_customFontUrl_input");
+    if (fontInput) {
+      const storedFontUrl =
+        localStorage.getItem(settingsKeys.customFontUrl) || "";
+      fontInput.value = cleanValue(storedFontUrl) || "";
+    }
+    const fontFamilyInput = document.getElementById(
+      "tweak_customFontFamily_input"
+    );
+    if (fontFamilyInput) {
+      const storedFontFamily =
+        localStorage.getItem(settingsKeys.customFontFamily) || "";
+      fontFamilyInput.value = cleanValue(storedFontFamily) || "";
+    }
+    const fontSizeInput = document.getElementById("tweak_customFontSize_input");
+    if (fontSizeInput) {
+      const storedSizeString = localStorage.getItem(
+        settingsKeys.customFontSize
+      );
+      let sizeToSet = "";
+      if (storedSizeString && storedSizeString !== "null") {
+        try {
+          const parsedSize = JSON.parse(storedSizeString);
+          if (typeof parsedSize === "number" && parsedSize > 0) {
+            sizeToSet = parsedSize;
+          }
+        } catch (e) {
+          console.error(`${consolePrefix} Error parsing stored font size:`, e);
         }
-    });
-
-    // Load text/number input values
-     const textInputs = [
-         { id: "tweak_customPageTitle_input", key: settingsKeys.customPageTitle, isNumber: false },
-         { id: "tweak_customFontUrl_input", key: settingsKeys.customFontUrl, isNumber: false },
-         { id: "tweak_customFontFamily_input", key: settingsKeys.customFontFamily, isNumber: false },
-         { id: "tweak_customFontSize_input", key: settingsKeys.customFontSize, isNumber: true },
-     ];
-
-     textInputs.forEach(({ id, key, isNumber }) => {
-         const input = document.getElementById(id);
-         if (input) {
-             const storedValueRaw = localStorage.getItem(key);
-             let valueToSet = ""; // Default to empty string for input field
-
-             if (storedValueRaw !== null && storedValueRaw !== "null") {
-                  if (isNumber) {
-                      try {
-                          const parsedNum = JSON.parse(storedValueRaw);
-                          if (typeof parsedNum === 'number') {
-                               valueToSet = String(parsedNum); // Convert number back to string for input
-                          }
-                      } catch (e) { console.error(`Error parsing number for ${key}`, e); }
-                  } else {
-                      valueToSet = cleanValue(storedValueRaw) || ""; // Use cleaned string value
-                  }
-             }
-              input.value = valueToSet;
-         } else {
-              console.warn(`${consolePrefix} Text/Number input element not found for ID: ${id}`);
-         }
-     });
-
-
-    // Clear feedback message when loading
+      }
+      fontSizeInput.value = sizeToSet;
+    }
+    
+    // Load font weight
+    const fontWeightSelect = document.getElementById("tweak_customFontWeight_input");
+    if (fontWeightSelect) {
+      const storedWeightString = localStorage.getItem(settingsKeys.customFontWeight);
+      let storedWeight = null;
+      try {
+        storedWeight = storedWeightString ? JSON.parse(storedWeightString) : "";
+      } catch (e) {
+        console.error(`${consolePrefix} Error parsing stored font weight:`, e);
+      }
+      
+      fontWeightSelect.value = storedWeight || "";
+    }
+    
+    // Update font preview
+    updateFontPreview();
+    
     if (feedbackElement) feedbackElement.textContent = " ";
   }
-
-
-  function toggleModal(forceState) {
-    if (!modalOverlay) {
-      console.warn(`${consolePrefix} Modal overlay not found. Cannot toggle.`);
-      return;
-    }
-    const isCurrentlyVisible = modalOverlay.style.display === "flex";
-    const shouldShow = typeof forceState === "boolean" ? forceState : !isCurrentlyVisible;
-
-    if (shouldShow) {
-      loadSettingsIntoModal(); // Load fresh data before showing
-      modalOverlay.style.display = "flex";
-       console.log(`${consolePrefix} Showing modal.`);
+  
+  function updateFontPreview() {
+    const previewElement = document.getElementById("font-preview-text");
+    if (!previewElement) return;
+    
+    const fontFamily = cleanValue(localStorage.getItem(settingsKeys.customFontFamily)) || "inherit";
+    const fontSize = getSetting(settingsKeys.customFontSize, null) || "inherit";
+    const fontWeight = getSetting(settingsKeys.customFontWeight, null) || "inherit";
+    
+    if (fontFamily && fontFamily !== "inherit") {
+      previewElement.style.fontFamily = fontFamily.includes(" ") ? `'${fontFamily}'` : fontFamily;
     } else {
-      modalOverlay.style.display = "none";
-       console.log(`${consolePrefix} Hiding modal.`);
-       // Optional: Clear feedback when closing
-       if (feedbackElement) feedbackElement.textContent = " ";
+      previewElement.style.fontFamily = "inherit";
+    }
+    
+    previewElement.style.fontSize = fontSize !== "inherit" ? `${fontSize}px` : "inherit";
+    previewElement.style.fontWeight = fontWeight;
+  }
+  
+  function saveSetting(key, value) {
+    try {
+      if (value === null) {
+        localStorage.removeItem(key);
+      } else {
+        localStorage.setItem(key, JSON.stringify(value));
+      }
+
+      if (feedbackElement) {
+        feedbackElement.textContent = "Settings saved.";
+      }
+      applyStylesBasedOnSettings();
+      if (
+        key === settingsKeys.customFontUrl ||
+        key === settingsKeys.customFontFamily ||
+        key === settingsKeys.customFontSize ||
+        key === settingsKeys.customFontWeight ||
+        key === settingsKeys.applyFontToEntireUI
+      ) {
+        applyCustomFont();
+      }
+    } catch (error) {
+      console.error(`${consolePrefix} Error saving setting ${key}:`, error);
+      if (feedbackElement) {
+        feedbackElement.textContent = "Error saving settings.";
+      }
     }
   }
+  function toggleModal(forceState) {
+    if (!modalOverlay) {
+      console.warn(`${consolePrefix} Modal overlay not found.`);
+      return;
+    }
+    const currentComputedDisplay =
+      window.getComputedStyle(modalOverlay).display;
+    const shouldShow =
+      typeof forceState === "boolean"
+        ? forceState
+        : currentComputedDisplay === "none";
 
-
-  // --- Initialization and Observation ---
-
+    if (shouldShow) {
+      loadSettingsIntoModal();
+      modalOverlay.style.display = "flex";
+    } else {
+      modalOverlay.style.display = "none";
+    }
+  }
+  document.addEventListener("keydown", (event) => {
+    // macOS: Command (event.metaKey)
+    // Windows/Linux: Alt (event.altKey)
+    const isMac = navigator.userAgent.toUpperCase().includes("MAC");
+    const modifierPressed = isMac ? event.metaKey : event.altKey;
+    if (event.shiftKey && modifierPressed && event.key.toUpperCase() === "T") {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleModal();
+    }
+  });
   function initializeTweaks() {
     if (originalPageTitle === null) {
-      originalPageTitle = document.title; // Store the initial page title
-      console.log(`${consolePrefix} Stored original page title: ${originalPageTitle}`);
+      originalPageTitle = document.title;
     }
-    // Apply all initial settings
     applyStylesBasedOnSettings();
     applyCustomTitle();
     applyCustomFont();
-     console.log(`${consolePrefix} Initial styles applied.`);
   }
-
-  // Create the modal elements once on script load
   createSettingsModal();
-
-  // Use MutationObserver to re-apply styles and ensure Tweaks button exists
   const observer = new MutationObserver((mutationsList) => {
-    // Re-apply styles that might be overridden by TypingMind's dynamic updates
     applyStylesBasedOnSettings();
-    applyCustomTitle(); // Title might get reset on navigation
-    // applyCustomFont(); // Font styles are usually stable once injected, less need to re-apply constantly
-
-    // Check for workspace bar and ensure Tweaks button is present
-    const workspaceBar = document.querySelector('div[data-element-id="workspace-bar"]');
+    applyCustomTitle();
+    applyCustomFont();
+    const workspaceBar = document.querySelector(
+      'div[data-element-id="workspace-bar"]'
+    );
     if (workspaceBar) {
       let tweaksButton = document.getElementById("workspace-tab-tweaks");
-      if (!tweaksButton) {
-          // Find reference buttons for styling and position
-           const settingsButton = workspaceBar.querySelector('button[data-element-id="workspace-tab-settings"]');
-           const syncButton = workspaceBar.querySelector('button[data-element-id="workspace-tab-cloudsync"]');
-           const profileButton = document.querySelector('button[data-element-id="workspace-profile-button"]'); // Might be outside workspace bar
-           const referenceButton = settingsButton || syncButton || profileButton; // Find *any* button to copy styles
+      const settingsButton = workspaceBar.querySelector(
+        'button[data-element-id="workspace-tab-settings"]'
+      );
+      const syncButton = workspaceBar.querySelector(
+        'button[data-element-id="workspace-tab-cloudsync"]'
+      );
+      const profileButton = document.querySelector(
+        'button[data-element-id="workspace-profile-button"]'
+      );
+      const styleReferenceButton = syncButton || profileButton;
+      if (!tweaksButton && settingsButton && styleReferenceButton) {
+        tweaksButton = document.createElement("button");
+        tweaksButton.id = "workspace-tab-tweaks";
+        tweaksButton.title = "Open UI Tweaks";
+        tweaksButton.dataset.elementId = "workspace-tab-tweaks";
+        tweaksButton.className = styleReferenceButton.className;
+        const outerSpan = document.createElement("span");
+        const styleReferenceOuterSpan =
+          styleReferenceButton.querySelector(":scope > span");
+        if (styleReferenceOuterSpan) {
+          outerSpan.className = styleReferenceOuterSpan.className;
+        }
 
-           if (referenceButton && referenceButton.parentNode) { // Ensure we found a reference and it's in the DOM
-                 console.log(`${consolePrefix} Reference button found, creating Tweaks button.`);
-                 tweaksButton = document.createElement("button");
-                 tweaksButton.id = "workspace-tab-tweaks";
-                 tweaksButton.title = "Open UI Tweaks (Shift+Cmd/Alt+T)";
-                 tweaksButton.dataset.elementId = "workspace-tab-tweaks"; // Mimic TM's data attribute
-                 tweaksButton.className = referenceButton.className; // Copy classes for basic style
+        const iconDiv = document.createElement("div");
+        const styleReferenceIconDiv = styleReferenceButton.querySelector(
+          ":scope > span > div"
+        );
+        if (styleReferenceIconDiv) {
+          iconDiv.className = styleReferenceIconDiv.className;
+        }
+        iconDiv.style.position = "relative";
+        iconDiv.style.display = "flex";
+        iconDiv.style.justifyContent = "center";
+        iconDiv.style.alignItems = "center";
 
-                 // Create inner structure mirroring reference button (Span > Div > SVG, Span > Text)
-                 const outerSpan = document.createElement("span");
-                 const referenceOuterSpan = referenceButton.querySelector(":scope > span");
-                 if (referenceOuterSpan) outerSpan.className = referenceOuterSpan.className;
+        const svgIcon = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "svg"
+        );
+        svgIcon.setAttribute("class", "w-5 h-5 flex-shrink-0");
+        svgIcon.setAttribute("width", "18px");
+        svgIcon.setAttribute("height", "18px");
+        svgIcon.setAttribute("viewBox", "0 0 24 24");
+        svgIcon.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        const currentWsIconColor = getSetting(
+          settingsKeys.workspaceIconColor,
+          null
+        );
+        svgIcon.style.color =
+          currentWsIconColor || defaultWorkspaceIconColorVisual;
+        svgIcon.setAttribute("fill", "currentColor");
 
-                 const iconDiv = document.createElement("div");
-                  const referenceIconDiv = referenceButton.querySelector(":scope > span > div"); // Icon container div
-                  if (referenceIconDiv) iconDiv.className = referenceIconDiv.className;
-                  iconDiv.style.position = "relative"; // Ensure icon positioning context if needed
-                  iconDiv.style.display = "flex";
-                  iconDiv.style.justifyContent = "center";
-                  iconDiv.style.alignItems = "center";
+        const svgPath = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "path"
+        );
+        svgPath.setAttribute(
+          "d",
+          "M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4c-.83 0-1.5-.67-1.5-1.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
+        );
+        svgIcon.appendChild(svgPath);
+        iconDiv.appendChild(svgIcon);
 
-                 // Create SVG Icon (Palette/Color Wheel style)
-                 const svgIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                 svgIcon.setAttribute("class", "w-5 h-5 flex-shrink-0"); // Common TM icon classes
-                  svgIcon.setAttribute("width", "18px"); // Explicit size
-                  svgIcon.setAttribute("height", "18px");
-                 svgIcon.setAttribute("viewBox", "0 0 24 24");
-                 svgIcon.setAttribute("fill", "none"); // Use stroke for this icon
-                 svgIcon.setAttribute("stroke", "currentColor");
-                  svgIcon.setAttribute("stroke-width", "2");
-                  svgIcon.setAttribute("stroke-linecap", "round");
-                  svgIcon.setAttribute("stroke-linejoin", "round");
+        const textSpan = document.createElement("span");
+        textSpan.className =
+          "font-normal self-stretch text-center text-xs leading-4 md:leading-none";
+        textSpan.textContent = "Tweaks";
 
-                   // Icon Path (simple palette)
-                   const svgPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                   svgPath.setAttribute("d", "M12 2.69l.19.01c4.2 .23 7.46 3.81 7.46 8.3 0 4.69-3.81 8.5-8.5 8.5h-.31a8.47 8.47 0 01-8.19-7.19A8.5 8.5 0 0112 2.69zm0 1.81a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM9 12a1 1 0 11-2 0 1 1 0 012 0zm4 0a1 1 0 11-2 0 1 1 0 012 0zm4 0a1 1 0 11-2 0 1 1 0 012 0z");
-                   svgPath.setAttribute("fill", "currentColor"); // Fill the holes/palette part
-                    svgPath.removeAttribute("stroke"); // Remove stroke from this path
+        outerSpan.appendChild(iconDiv);
+        outerSpan.appendChild(textSpan);
+        tweaksButton.appendChild(outerSpan);
 
-
-                 svgIcon.appendChild(svgPath);
-                 iconDiv.appendChild(svgIcon);
-
-                 // Text Label
-                 const textSpan = document.createElement("span");
-                 // Try to copy text style from reference button, default if not found
-                 const referenceTextSpan = referenceButton.querySelector(":scope > span > span");
-                  textSpan.className = referenceTextSpan ? referenceTextSpan.className : "font-normal text-xs";
-                 textSpan.textContent = "Tweaks";
-
-                 // Assemble Button Structure
-                 outerSpan.appendChild(iconDiv);
-                 outerSpan.appendChild(textSpan);
-                 tweaksButton.appendChild(outerSpan);
-
-                 // Add click listener
-                 tweaksButton.addEventListener("click", (e) => {
-                     e.preventDefault();
-                     e.stopPropagation(); // Prevent potential parent handlers
-                     toggleModal(true); // Force open
-                 });
-
-                 // Insert the button before the Settings button (or reference if settings not found)
-                  const insertBeforeTarget = settingsButton || referenceButton;
-                  if (insertBeforeTarget && insertBeforeTarget.parentNode) {
-                        insertBeforeTarget.parentNode.insertBefore(tweaksButton, insertBeforeTarget);
-                        console.log(`${consolePrefix} Tweaks button added to workspace bar.`);
-                        // Apply initial visibility and color from settings AFTER inserting
-                         applyStylesBasedOnSettings();
-                   } else {
-                        console.warn(`${consolePrefix} Could not find a suitable place to insert the Tweaks button.`);
-                   }
-
-           } else if (!referenceButton) {
-                // This might happen transiently during loading
-                // console.warn(`${consolePrefix} Could not find reference button to create Tweaks button yet.`);
-           } else if (!referenceButton.parentNode) {
-                 // This might happen if the reference button is detached temporarily
-                 // console.warn(`${consolePrefix} Reference button found but has no parent node.`);
-           }
-      } else {
-          // Tweaks button exists, ensure its visibility/color are correct (handled by applyStylesBasedOnSettings)
+        tweaksButton.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleModal(true);
+        });
+        if (settingsButton.parentNode) {
+          settingsButton.parentNode.insertBefore(tweaksButton, settingsButton);
+          const showModalButtonSetting = getSetting(
+            settingsKeys.showModalButton,
+            true
+          );
+          const newDisplay = showModalButtonSetting ? "inline-flex" : "none";
+          tweaksButton.style.display = newDisplay;
+        } else {
+          console.warn(
+            `${consolePrefix} Could not insert Tweaks button, settings button has no parent node.`
+          );
+        }
       }
     }
   });
 
-  // Start observing the body for changes
   observer.observe(document.body, {
-    childList: true, // Watch for additions/removals of nodes
-    subtree: true,   // Watch descendants too
+    childList: true,
+    subtree: true,
   });
 
-  // Add Keyboard Shortcut Listener (Shift + Cmd/Alt + T)
-   document.addEventListener("keydown", (event) => {
-        const isMac = navigator.userAgent.toUpperCase().includes("MAC");
-        const modifierPressed = isMac ? event.metaKey : event.altKey; // Cmd on Mac, Alt elsewhere
-
-        if (event.shiftKey && modifierPressed && event.key.toUpperCase() === "T") {
-            console.log(`${consolePrefix} Shortcut detected.`);
-            event.preventDefault();
-            event.stopPropagation();
-            toggleModal(); // Toggle visibility
-        }
-   });
-
-
-  // Run initial setup when DOM is ready
-  if (document.readyState === "complete" || document.readyState === "interactive") {
+  if (
+    document.readyState === "complete" ||
+    document.readyState === "interactive"
+  ) {
     initializeTweaks();
   } else {
     document.addEventListener("DOMContentLoaded", initializeTweaks);
   }
+  console.log(
+    `${consolePrefix} Initialized Typingmind UI Tweaks extension. Press Shift+Alt+T for settings.`
+  );
 
-  console.log(`${consolePrefix} Initialized. Press Shift + ${navigator.userAgent.toUpperCase().includes("MAC") ? 'Cmd' : 'Alt'} + T to toggle settings.`);
+  function applyCustomFont() {
+    let customFontUrl = localStorage.getItem(settingsKeys.customFontUrl);
+    let customFontFamily = localStorage.getItem(settingsKeys.customFontFamily);
+    let customFontSize = localStorage.getItem(settingsKeys.customFontSize);
+    let customFontWeight = localStorage.getItem(settingsKeys.customFontWeight);
+    let applyToEntireUI = getSetting(settingsKeys.applyFontToEntireUI, true);
+    
+    const styleId = "tweak-custom-font-style";
+    let styleElement = document.getElementById(styleId);
+    let cssRules = [];
 
+    if (!styleElement) {
+      styleElement = document.createElement("style");
+      styleElement.id = styleId;
+      document.head.appendChild(styleElement);
+    }
+
+    const cleanedUrl = cleanValue(customFontUrl);
+    const cleanedFamily = cleanValue(customFontFamily);
+    const cleanedSize = cleanValue(customFontSize);
+    const cleanedWeight = cleanValue(customFontWeight);
+
+    if (cleanedUrl) {
+      if (
+        cleanedUrl.startsWith("http://") ||
+        cleanedUrl.startsWith("https://")
+      ) {
+        cssRules.push(`@import url('${cleanedUrl}');`);
+      } else {
+        console.warn(
+          `${consolePrefix} Invalid custom font URL provided: ${cleanedUrl}`
+        );
+      }
+    }
+    
+    // Rules for font styling
+    let fontRules = [];
+    if (cleanedFamily && cleanedFamily.trim() !== "") {
+      let fontFamilyValue = cleanedFamily.trim();
+      if (fontFamilyValue.includes(" ")) {
+        fontFamilyValue = `'${fontFamilyValue}'`;
+      }
+      fontRules.push(`  font-family: ${fontFamilyValue} !important;`);
+    }
+    
+    if (
+      cleanedSize &&
+      !isNaN(parseInt(cleanedSize, 10)) &&
+      parseInt(cleanedSize, 10) > 0
+    ) {
+      fontRules.push(`  font-size: ${cleanedSize}px !important;`);
+    }
+    
+    if (cleanedWeight && cleanedWeight.trim() !== "") {
+      fontRules.push(`  font-weight: ${cleanedWeight} !important;`);
+    }
+    
+    // Apply to chat space
+    if (fontRules.length > 0) {
+      const rulesString = fontRules.join("\n");
+      
+      // Always apply to chat conversation area
+      cssRules.push(`
+[data-element-id="chat-space-middle-part"] .prose,
+[data-element-id="chat-space-middle-part"] .prose-sm,
+[data-element-id="chat-space-middle-part"] .text-sm,
+textarea,
+[data-element-id="chat-text-input"] {
+${rulesString}
+}
+      `);
+      
+      // Apply to entire UI if option is enabled
+      if (applyToEntireUI) {
+        cssRules.push(`
+body, 
+button, 
+input, 
+select, 
+textarea,
+.text-lg,
+.text-md,
+.text-sm,
+.text-xs,
+[data-element-id="workspace-bar"] span,
+[data-element-id="chat-list-container"] *,
+[data-element-id="chat-title"],
+[data-element-id="chat-header"] * {
+${rulesString}
+}
+        `);
+      }
+    }
+    
+    // Set base size on containers if font size is specified
+    if (
+      cleanedSize &&
+      !isNaN(parseInt(cleanedSize, 10)) &&
+      parseInt(cleanedSize, 10) > 0
+    ) {
+      cssRules.push(`
+[data-element-id="chat-space-middle-part"] {
+  font-size: ${cleanedSize}px !important; /* Set base size on container */
+}
+      `);
+      
+      if (applyToEntireUI) {
+        cssRules.push(`
+html, body {
+  font-size: ${cleanedSize}px !important;
+}
+        `);
+      }
+    }
+
+    const newStyleContent = cssRules.join("\n");
+    if (styleElement.textContent !== newStyleContent) {
+      styleElement.textContent = newStyleContent;
+    }
+  }
 })();

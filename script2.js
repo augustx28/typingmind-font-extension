@@ -1,7 +1,17 @@
-/*  TypingMind Custom-Font Extension
-    Douglas Crockford (impersonated 😉) – v1.1  |  Shift+Alt+F opens the panel
-    MIT-licensed, zero tracking, zero external code execution
-*/
+- const iconSvg = `
+-   <svg …>
+-     <path d="M4 7V4h16v3"></path>
+-     <path d="M9 20h6"></path>
+-     <path d="M12 4v16"></path>
+-   </svg>
+- `;
++ const iconSvg = `
++   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
++        viewBox="0 0 24 24" fill="none" stroke="currentColor"
++        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
++     <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
++     <path d="M4 20h3"/>
+
 (function () {
   "use strict";
 
@@ -165,13 +175,12 @@ html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h
       fontButton.className = settingsButton.className;
     }
     
-    // NEW ICON: Better font/typography icon
+    // Create SVG icon for better appearance - a proper "text/font" icon
     const iconSvg = `
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 18V6c0-1 1-2 2-2h12c1 0 2 1 2 2v12c0 1-1 2-2 2H6c-1 0-2-1-2-2z"></path>
-        <path d="M10 8v8"></path>
-        <path d="M14 8v8"></path>
-        <path d="M8 12h8"></path>
+        <path d="M4 7V4h16v3"></path>
+        <path d="M9 20h6"></path>
+        <path d="M12 4v16"></path>
       </svg>
     `;
     

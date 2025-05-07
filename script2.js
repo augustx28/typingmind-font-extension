@@ -1,3 +1,7 @@
+/*  TypingMind Custom-Font Extension
+    Douglas Crockford (impersonated 😉) – v1.1  |  Shift+Alt+F opens the panel
+    MIT-licensed, zero tracking, zero external code execution
+*/
 (function () {
   "use strict";
 
@@ -10,7 +14,7 @@
 
   const STYLE_ID = "tm-font-style";
   const MODAL_ID = "tm-font-modal";
-
+  
   /* ---------- helpers ---------- */
   const clean = (v) =>
     typeof v === "string" ? v.trim().replace(/^['"]|['"]$/g, "") : "";
@@ -43,7 +47,7 @@
 html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h6, a,
 [data-element-id="chat-space-middle-part"],
 [data-element-id="chat-space-middle-part"] *,
-.prose, .prose-sm, .text-sm,
+.prose, .prose-sm, .text-sm, 
 #chat-container, #chat-container * {
   ${fam ? `font-family: ${fam.includes(" ") ? "'" + fam + "'" : fam} !important;` : ""}
   ${size ? `font-size: ${parseInt(size, 10)}px !important;` : ""}
@@ -90,7 +94,7 @@ html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h
           <button id="tm-font-clear" style="padding:8px 16px;background:#6c757d;border:none;border-radius:4px;color:#fff;cursor:pointer;font-weight:500">Reset All</button>
           <button id="tm-font-save"  style="padding:8px 20px;background:#2563eb;border:none;border-radius:4px;color:#fff;cursor:pointer;font-weight:500">Apply Font</button>
         </div>
-
+        
         <p id="tm-font-feedback" style="margin:16px 0 0;font-size:0.85em;color:#4ade80;text-align:center;min-height:1em;font-weight:500"></p>
       </div>
     `;
@@ -102,7 +106,7 @@ html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h
     overlay.querySelector("#tm-font-size").value = get(KEY.size);
 
     const feedback = overlay.querySelector("#tm-font-feedback");
-
+    
     /* save button */
     overlay.querySelector("#tm-font-save").onclick = () => {
       save(KEY.url, overlay.querySelector("#tm-font-url").value);
@@ -144,62 +148,61 @@ html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h
   function addMenuButton() {
     // Don't add if already exists
     if (document.getElementById("tm-font-menu-button")) return;
-
+    
     const workspaceBar = document.querySelector('[data-element-id="workspace-bar"]');
     if (!workspaceBar) return;
-
+    
     const settingsButton = workspaceBar.querySelector('[data-element-id="workspace-tab-settings"]');
     if (!settingsButton) return;
-
+    
     // Create our button with same styling as other workspace buttons
     const fontButton = document.createElement("button");
     fontButton.id = "tm-font-menu-button";
     fontButton.title = "Custom Font Settings (Shift+Alt+F)";
-
+    
     // Copy class from settings button for consistent styling
     if (settingsButton.className) {
       fontButton.className = settingsButton.className;
     }
-
-    // ** NEW ICON SVG HERE **
+    
+    // NEW ICON: Better font/typography icon
     const iconSvg = `
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17 11l-1.26-3.14A4.41 4.41 0 0012.08 5H5.5a2 2 0 00-2 2v11a2 2 0 002 2h13a2 2 0 002-2v-4.5"/>
-        <path d="m5 12 3-7 3 7"/>
-        <path d="M5.5 12h5"/>
-        <path d="m18 20 3-3-3-3"/>
-        <path d="M15 17h6"/>
+        <path d="M4 18V6c0-1 1-2 2-2h12c1 0 2 1 2 2v12c0 1-1 2-2 2H6c-1 0-2-1-2-2z"></path>
+        <path d="M10 8v8"></path>
+        <path d="M14 8v8"></path>
+        <path d="M8 12h8"></path>
       </svg>
     `;
-
+    
     // Clone the inner structure from the settings button
     const settingsInnerSpan = settingsButton.querySelector("span");
     if (settingsInnerSpan) {
       const clone = settingsInnerSpan.cloneNode(true);
-
+      
       // Find the icon container and replace it
       const iconContainer = clone.querySelector("div");
       if (iconContainer) {
         iconContainer.innerHTML = iconSvg;
       }
-
+      
       // Update the text label
       const textSpan = clone.querySelector("span");
       if (textSpan) {
         textSpan.textContent = "Font";
       }
-
+      
       fontButton.appendChild(clone);
     } else {
       // Fallback simple content if we can't clone
       fontButton.innerHTML = `<span>${iconSvg}<span>Font</span></span>`;
     }
-
+    
     // Insert before settings button
     if (settingsButton.parentNode) {
       settingsButton.parentNode.insertBefore(fontButton, settingsButton);
     }
-
+    
     // Add click event
     fontButton.addEventListener("click", () => {
       window.TMFontModal.toggle();
@@ -209,7 +212,7 @@ html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h
   /* ---------- hotkey ---------- */
   document.addEventListener("keydown", (e) => {
     const mac = /Mac/i.test(navigator.platform);
-    const modOk = mac ? e.metaKey : e.altKey; // Alt on Win/Linux, Cmd on Mac
+    const modOk = mac ? e.metaKey : e.altKey;
     if (modOk && e.shiftKey && e.key.toUpperCase() === "F") {
       e.preventDefault();
       window.TMFontModal.toggle();
@@ -218,9 +221,9 @@ html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h
 
   /* ---------- observe DOM changes to add menu button ---------- */
   const observer = new MutationObserver(() => {
-    addMenuButton(); // Attempt to add button on DOM changes
+    addMenuButton();
   });
-
+  
   observer.observe(document.body, {
     childList: true,
     subtree: true
@@ -243,8 +246,7 @@ html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h
   }
 
   console.log(
-    "%cTypingMind Font Extension loaded – Shift+Alt+F to open settings",
+    "%cTypingMind Font Extension loaded – Shift+Alt+F / ⌘⇧F to open settings",
     "color:#42b983;font-weight:bold"
   );
 })();
-

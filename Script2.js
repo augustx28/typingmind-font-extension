@@ -1,5 +1,5 @@
 /*  TypingMind Custom-Font Extension
-    v1.1  |  open with ⌘⇧F (Mac) or Shift+Alt+F (Win/Linux)
+    v1.1.1  |  open with ⌘⇧F (Mac) or Shift+Alt+F (Win/Linux)
     MIT Licence  •  Douglas Crockford impersonation
 */
 (function () {
@@ -13,8 +13,8 @@
   };
 
   const STYLE_ID = "tm-font-style";
-  const MODAL_ID  = "tm-font-modal";
-  const BTN_ID    = "workspace-tab-font";
+  const MODAL_ID = "tm-font-modal";
+  const BTN_ID   = "workspace-tab-font";
 
   /* ────────── helpers ────────── */
   const clean = (v) =>
@@ -29,8 +29,8 @@
 
   /* ────────── font injector ────────── */
   function applyFont() {
-    const url = get(KEY.url);
-    const fam = get(KEY.family);
+    const url  = get(KEY.url);
+    const fam  = get(KEY.family);
     const size = get(KEY.size);
 
     let css = url ? `@import url('${url}');\n` : "";
@@ -132,7 +132,7 @@ html, body, * {
     btn.className = refBtn.className;
     btn.title = "Font settings";
 
-    /* inner markup mirrors TypingMind's buttons */
+    /* ---- updated icon here ---- */
     btn.innerHTML = `
       <span class="${refBtn.querySelector("span")?.className || ""}">
         <div class="${refBtn.querySelector("div")?.className || ""}">
@@ -152,8 +152,8 @@ html, body, * {
 
   /* ────────── hot-key ────────── */
   document.addEventListener("keydown", (e) => {
-    const mac  = /Mac/i.test(navigator.platform);
-    const mod  = mac ? e.metaKey : e.altKey;
+    const mac = /Mac/i.test(navigator.platform);
+    const mod = mac ? e.metaKey : e.altKey;
     if (mod && e.shiftKey && e.key.toUpperCase() === "F") {
       e.preventDefault();
       window.TMFontModal.toggle();
@@ -176,5 +176,5 @@ html, body, * {
   const obs = new MutationObserver(addMenuButton);
   obs.observe(document.body, { childList: true, subtree: true });
 
-  console.log("%cTypingMind Font Extension v1.1 – loaded", "color:#42b983");
+  console.log("%cTypingMind Font Extension v1.1.1 – loaded", "color:#42b983");
 })();

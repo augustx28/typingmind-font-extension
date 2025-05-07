@@ -1,7 +1,3 @@
-/*  TypingMind Custom-Font Extension
-    v1.1  |  open with ⌘⇧F (Mac) or Shift+Alt+F (Win/Linux)
-    MIT Licence  •  Douglas Crockford impersonation
-*/
 (function () {
   "use strict";
 

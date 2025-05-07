@@ -1,5 +1,5 @@
 /*  TypingMind Custom-Font Extension
-    v1.1.1  |  open with ⌘⇧F (Mac) or Shift+Alt+F (Win/Linux)
+    v1.1  |  open with ⌘⇧F (Mac) or Shift+Alt+F (Win/Linux)
     MIT Licence  •  Douglas Crockford impersonation
 */
 (function () {
@@ -13,8 +13,8 @@
   };
 
   const STYLE_ID = "tm-font-style";
-  const MODAL_ID = "tm-font-modal";
-  const BTN_ID   = "workspace-tab-font";
+  const MODAL_ID  = "tm-font-modal";
+  const BTN_ID    = "workspace-tab-font";
 
   /* ────────── helpers ────────── */
   const clean = (v) =>
@@ -29,8 +29,8 @@
 
   /* ────────── font injector ────────── */
   function applyFont() {
-    const url  = get(KEY.url);
-    const fam  = get(KEY.family);
+    const url = get(KEY.url);
+    const fam = get(KEY.family);
     const size = get(KEY.size);
 
     let css = url ? `@import url('${url}');\n` : "";
@@ -132,13 +132,13 @@ html, body, * {
     btn.className = refBtn.className;
     btn.title = "Font settings";
 
-    /* ---- updated icon here ---- */
+    /* inner markup mirrors TypingMind’s buttons */
     btn.innerHTML = `
       <span class="${refBtn.querySelector("span")?.className || ""}">
         <div class="${refBtn.querySelector("div")?.className || ""}">
           <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-            <!-- Material Icons 'format_size' glyph -->
-            <path d="M9 4v3h5v12h3V7h5V4H9zm-6 8h3v7h3v-7h3v-3H3v3z"/>
+            <!-- Material Icons 'format_size' (Aa) glyph, selected for better font representation -->
+            <path d="M9 4v3h5v12h3V7h5V4H9zm-6 8h3v7h3v-7h3V9H3v3z"/>
           </svg>
         </div>
         <span class="font-normal self-stretch text-center text-xs leading-4 md:leading-none">Font</span>
@@ -152,8 +152,8 @@ html, body, * {
 
   /* ────────── hot-key ────────── */
   document.addEventListener("keydown", (e) => {
-    const mac = /Mac/i.test(navigator.platform);
-    const mod = mac ? e.metaKey : e.altKey;
+    const mac  = /Mac/i.test(navigator.platform);
+    const mod  = mac ? e.metaKey : e.altKey;
     if (mod && e.shiftKey && e.key.toUpperCase() === "F") {
       e.preventDefault();
       window.TMFontModal.toggle();
@@ -176,5 +176,5 @@ html, body, * {
   const obs = new MutationObserver(addMenuButton);
   obs.observe(document.body, { childList: true, subtree: true });
 
-  console.log("%cTypingMind Font Extension v1.1.1 – loaded", "color:#42b983");
+  console.log("%cTypingMind Font Extension v1.1 (Icon Tweaked) – loaded", "color:#42b983");
 })();

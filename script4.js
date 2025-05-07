@@ -1,5 +1,5 @@
 /*  TypingMind Custom-Font Extension
-    Douglas Crockford (impersonated 😉) – v1.2 (Icon Updated) |  Shift+Alt+F opens the panel
+    Douglas Crockford (impersonated 😉) – v1.1.1  |  Shift+Alt+F opens the panel
     MIT-licensed, zero tracking, zero external code execution
 */
 (function () {
@@ -39,7 +39,7 @@
     const urlMatch = url.match(/href=['"]([^'"]+)['"]/);
     const cleanUrl = urlMatch ? urlMatch[1] : url;
 
-    if (cleanUrl) css += `@import url('${cleanUrl}');\n`;
+    if (cleanUrl) css += `@import url(\'\'\'${cleanUrl}\'\'\');\n`;
 
     if (fam || size) {
       // More comprehensive selectors to ensure we target everything
@@ -94,7 +94,7 @@ html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h
           <button id="tm-font-clear" style="padding:8px 16px;background:#6c757d;border:none;border-radius:4px;color:#fff;cursor:pointer;font-weight:500">Reset All</button>
           <button id="tm-font-save"  style="padding:8px 20px;background:#2563eb;border:none;border-radius:4px;color:#fff;cursor:pointer;font-weight:500">Apply Font</button>
         </div>
-
+        
         <p id="tm-font-feedback" style="margin:16px 0 0;font-size:0.85em;color:#4ade80;text-align:center;min-height:1em;font-weight:500"></p>
       </div>
     `;
@@ -165,14 +165,17 @@ html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h
       fontButton.className = settingsButton.className;
     }
 
-    // ** NEW ICON SVG HERE **
+    // **THIS IS THE UPDATED ICON**
+    // Tabler Icon: Typography (https://tabler-icons.io/i/typography)
+    // Adjusted width and height to 18 to match the style of other sidebar icons.
     const iconSvg = `
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17 11l-1.26-3.14A4.41 4.41 0 0012.08 5H5.5a2 2 0 00-2 2v11a2 2 0 002 2h13a2 2 0 002-2v-4.5"/>
-        <path d="m5 12 3-7 3 7"/>
-        <path d="M5.5 12h5"/>
-        <path d="m18 20 3-3-3-3"/>
-        <path d="M15 17h6"/>
+        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+        <path d="M4 20l3 0"/>
+        <path d="M14 20l7 0"/>
+        <path d="M6.9 15l6.9 0"/>
+        <path d="M10.2 6.3l5.8 13.7"/>
+        <path d="M5 20l6 -16l2 0l7 16"/>
       </svg>
     `;
 
@@ -182,9 +185,21 @@ html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h
       const clone = settingsInnerSpan.cloneNode(true);
 
       // Find the icon container and replace it
-      const iconContainer = clone.querySelector("div");
+      const iconContainer = clone.querySelector("div"); // Assumes icon is wrapped in a div
       if (iconContainer) {
         iconContainer.innerHTML = iconSvg;
+      } else {
+        // Fallback if the div structure isn't found (less ideal, might not style perfectly)
+        // Attempt to replace the SVG directly if one exists in the clone
+        const existingSvg = clone.querySelector("svg");
+        if (existingSvg && existingSvg.parentNode) {
+            const tempContainer = document.createElement('div');
+            tempContainer.innerHTML = iconSvg;
+            existingSvg.parentNode.replaceChild(tempContainer.firstChild, existingSvg);
+        } else {
+             // If no div and no SVG, prepend icon (simplest fallback)
+            clone.insertAdjacentHTML('afterbegin', iconSvg);
+        }
       }
 
       // Update the text label
@@ -195,7 +210,7 @@ html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h
 
       fontButton.appendChild(clone);
     } else {
-      // Fallback simple content if we can't clone
+      // Fallback simple content if we can't clone the span structure
       fontButton.innerHTML = `<span>${iconSvg}<span>Font</span></span>`;
     }
 
@@ -206,7 +221,9 @@ html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h
 
     // Add click event
     fontButton.addEventListener("click", () => {
-      window.TMFontModal.toggle();
+      if (window.TMFontModal && typeof window.TMFontModal.toggle === 'function') {
+        window.TMFontModal.toggle();
+      }
     });
   }
 
@@ -216,13 +233,22 @@ html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h
     const modOk = mac ? e.metaKey : e.altKey; // Alt on Win/Linux, Cmd on Mac
     if (modOk && e.shiftKey && e.key.toUpperCase() === "F") {
       e.preventDefault();
-      window.TMFontModal.toggle();
+      if (window.TMFontModal && typeof window.TMFontModal.toggle === 'function') {
+        window.TMFontModal.toggle();
+      }
     }
   });
 
   /* ---------- observe DOM changes to add menu button ---------- */
-  const observer = new MutationObserver(() => {
-    addMenuButton(); // Attempt to add button on DOM changes
+  const observer = new MutationObserver((mutationsList, observerInstance) => {
+    // Check if the button is already added or if the target elements are available
+    if (!document.getElementById("tm-font-menu-button") && 
+        document.querySelector('[data-element-id="workspace-bar"]') &&
+        document.querySelector('[data-element-id="workspace-tab-settings"]')) {
+      addMenuButton();
+      // Optionally, disconnect the observer if the button is added and won't be removed by TM's UI updates
+      // observerInstance.disconnect(); 
+    }
   });
 
   observer.observe(document.body, {
@@ -231,23 +257,23 @@ html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h
   });
 
   /* ---------- init ---------- */
+  function initialize() {
+    buildModal();
+    addMenuButton(); // Attempt to add button straight away
+    applyFont();
+  }
+
   if (
     document.readyState === "complete" ||
     document.readyState === "interactive"
   ) {
-    buildModal();
-    addMenuButton();
-    applyFont();
+    initialize();
   } else {
-    document.addEventListener("DOMContentLoaded", () => {
-      buildModal();
-      addMenuButton();
-      applyFont();
-    });
+    document.addEventListener("DOMContentLoaded", initialize);
   }
 
   console.log(
-    "%cTypingMind Font Extension loaded – Shift+Alt+F to open settings",
+    "%cTypingMind Font Extension loaded (v1.1.1) – Shift+Alt+F / ⌘⇧F to open settings",
     "color:#42b983;font-weight:bold"
   );
 })();

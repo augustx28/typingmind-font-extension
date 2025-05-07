@@ -249,3 +249,15 @@ html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h
     "color:#42b983;font-weight:bold"
   );
 })();
+    /* inner markup mirrors TypingMind’s buttons */
+    btn.innerHTML = `
+      <span class="${refBtn.querySelector("span")?.className || ""}">
+        <div class="${refBtn.querySelector("div")?.className || ""}">
+          <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+            <!-- Material Icons 'format_size' glyph (Aa) -->
+            <path d="M9 4v3h5v12h3V7h5V4H9zm-6 8h3v7h3v-7h3V9H3v3z"/>
+          </svg>
+        </div>
+        <span class="font-normal self-stretch text-center text-xs leading-4 md:leading-none">Font</span>
+      </span>
+    `;

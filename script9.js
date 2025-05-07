@@ -1,5 +1,5 @@
 /*  TypingMind Custom-Font Extension
-    Douglas Crockford (impersonated 😉) – v1.1  |  Shift+Alt+F opens the panel
+    Douglas Crockford (impersonated 😉) – v1.1.1  |  Shift+Alt+F opens the panel
     MIT-licensed, zero tracking, zero external code execution
 */
 (function () {
@@ -42,12 +42,11 @@
     if (cleanUrl) css += `@import url('${cleanUrl}');\n`;
 
     if (fam || size) {
-      // More comprehensive selectors to ensure we target everything
       css += `
 html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h6, a,
 [data-element-id="chat-space-middle-part"],
 [data-element-id="chat-space-middle-part"] *,
-.prose, .prose-sm, .text-sm, 
+.prose, .prose-sm, .text-sm,
 #chat-container, #chat-container * {
   ${fam ? `font-family: ${fam.includes(" ") ? "'" + fam + "'" : fam} !important;` : ""}
   ${size ? `font-size: ${parseInt(size, 10)}px !important;` : ""}
@@ -165,22 +164,22 @@ html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h
       fontButton.className = settingsButton.className;
     }
 
-    // Create SVG icon for better appearance - a proper "text/font" icon
-    // --- THIS IS THE MODIFIED PART ---
+    // --- NEW crisp "type" SVG icon ---
     const iconSvg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 19L12 5L20 19"/>
-        <path d="M7.5 14L16.5 14"/>
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="4 7 4 4 20 4 20 7"></polyline>
+        <line x1="9" y1="20" x2="15" y2="20"></line>
+        <line x1="12" y1="4" x2="12" y2="20"></line>
       </svg>
     `;
-    // --- END OF MODIFIED PART ---
 
     // Clone the inner structure from the settings button
     const settingsInnerSpan = settingsButton.querySelector("span");
     if (settingsInnerSpan) {
       const clone = settingsInnerSpan.cloneNode(true);
 
-      // Find the icon container and replace it
+      // Find the icon container and replace its contents
       const iconContainer = clone.querySelector("div");
       if (iconContainer) {
         iconContainer.innerHTML = iconSvg;
@@ -194,11 +193,12 @@ html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h
 
       fontButton.appendChild(clone);
     } else {
-      // Fallback simple content if we can't clone
-      fontButton.innerHTML = `<span>${iconSvg}<span>Font</span></span>`;
+      // Fallback if we can't clone
+      fontButton.innerHTML = `<span style="display:flex;align-items:center;gap:6px">
+        ${iconSvg}<span>Font</span></span>`;
     }
 
-    // Insert before settings button
+    // Insert before the existing settings button
     if (settingsButton.parentNode) {
       settingsButton.parentNode.insertBefore(fontButton, settingsButton);
     }
@@ -226,7 +226,7 @@ html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h
 
   observer.observe(document.body, {
     childList: true,
-    subtree: true
+    subtree: true,
   });
 
   /* ---------- init ---------- */

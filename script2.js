@@ -1,3 +1,7 @@
+/*  TypingMind Custom-Font Extension
+    v1.1  |  open with ⌘⇧F (Mac) or Shift+Alt+F (Win/Linux)
+    MIT Licence  •  Douglas Crockford impersonation
+*/
 (function () {
   "use strict";
 
@@ -133,8 +137,8 @@ html, body, * {
       <span class="${refBtn.querySelector("span")?.className || ""}">
         <div class="${refBtn.querySelector("div")?.className || ""}">
           <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-            <!-- Material Icons 'format_size' (Aa) glyph, selected for better font representation -->
-            <path d="M9 4v3h5v12h3V7h5V4H9zm-6 8h3v7h3v-7h3V9H3v3z"/>
+            <!-- Material Icons 'title' glyph -->
+            <path d="M3 4v4h2v10h4V8h4v10h4V8h4V4H3z"/>
           </svg>
         </div>
         <span class="font-normal self-stretch text-center text-xs leading-4 md:leading-none">Font</span>
@@ -172,5 +176,5 @@ html, body, * {
   const obs = new MutationObserver(addMenuButton);
   obs.observe(document.body, { childList: true, subtree: true });
 
-  console.log("%cTypingMind Font Extension v1.1 (Icon Tweaked) – loaded", "color:#42b983");
+  console.log("%cTypingMind Font Extension v1.1 – loaded", "color:#42b983");
 })();

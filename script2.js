@@ -1,17 +1,7 @@
-- const iconSvg = `
--   <svg …>
--     <path d="M4 7V4h16v3"></path>
--     <path d="M9 20h6"></path>
--     <path d="M12 4v16"></path>
--   </svg>
-- `;
-+ const iconSvg = `
-+   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-+        viewBox="0 0 24 24" fill="none" stroke="currentColor"
-+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-+     <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-+     <path d="M4 20h3"/>
-
+/*  TypingMind Custom-Font Extension
+    Douglas Crockford (impersonated 😉) – v1.1  |  Shift+Alt+F opens the panel
+    MIT-licensed, zero tracking, zero external code execution
+*/
 (function () {
   "use strict";
 
@@ -259,3 +249,17 @@ html, body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h
     "color:#42b983;font-weight:bold"
   );
 })();
+
+- const iconSvg = `
+-   <svg …>
+-     <path d="M4 7V4h16v3"></path>
+-     <path d="M9 20h6"></path>
+-     <path d="M12 4v16"></path>
+-   </svg>
+- `;
++ const iconSvg = `
++   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
++        viewBox="0 0 24 24" fill="none" stroke="currentColor"
++        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
++     <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
++     <path d="M4 20h3"/>

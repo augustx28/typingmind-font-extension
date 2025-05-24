@@ -1,11 +1,4 @@
-// ==UserScript==
-// @name        TypingMind Plugin Reorder
-// @namespace   http://tampermonkey.net/
-// @version     0.1
-// @description Allows rearranging installed plugins in TypingMind.
-// @match       https://www.typingmind.com/*
-// @grant       none
-// ==/UserScript==
+
 
 (function() {
     'use strict';

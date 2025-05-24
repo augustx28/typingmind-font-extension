@@ -1,1 +1,1 @@
-# 1typingmind-font-extension
+# typingmind-font-extension

@@ -6,7 +6,7 @@
   /* var(--workspace-height) */
   #nav-handler .transition .h-\\[var\\(--workspace-height\\)\\] {
     /* Use translate with two arguments for clarity */
-    transform: translate(0px, 750px) !important;
+    transform: translate(0px, 770px) !important;
   }
 }
   `.trim();

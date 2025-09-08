@@ -65,3 +65,11 @@
     init();
   }
 })();
+
+/* 5) #__next .custom-theme */
+html.dark #__next .custom-theme,
+body.dark #__next .custom-theme,
+.dark #__next .custom-theme {
+  background-color: #161616 !important;
+}
+

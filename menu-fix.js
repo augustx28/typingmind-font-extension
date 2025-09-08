@@ -7,7 +7,7 @@
   /* var( workspace height ) */
   #nav-handler .transition .h-\\[var\\(--workspace-height\\)\\]{
     bottom: 0px;
-    top: 710px;
+    top: 725px;
     position: fixed;
     right: 0px;
   }

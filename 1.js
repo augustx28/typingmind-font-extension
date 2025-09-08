@@ -9,7 +9,10 @@
     .dark .\\@container .flex-col .dark\\:bg-\\[--main-dark-color\\] {
       background-color: #161616;
     }
-
+/* Relative */
+    .dark .\\@container .flex-col .overflow-y-auto > .relative {
+      background-color: #161616;
+    }
     
     }
 
@@ -25,22 +28,12 @@
       background-color: #161616;
     }
 
-    /* Division - hidden */
-    .dark .overflow-auto div .lg\\:hidden {
-      background-color: #161616;
-    }
+  
     
     /* --- ORIGINAL STYLES (DARK MODE ONLY) --- */
 
-    /* Items stretch - Kept for alignment */
-    .dark .message-id-7425aedf-3acf-43a1-baa9-8ecb4585122a div .items-stretch {
-      transform: translatex(0px) translatey(0px);
-    }
+
     
-    /* Division - sticky - Kept to ensure transparency */
-    .dark .overflow-auto div .lg\\:sticky {
-      background-color: transparent;
-    }
   `;
 
   // Function to inject CSS

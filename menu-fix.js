@@ -16,7 +16,7 @@
     @media (max-width:499px) {
       /* var(workspace height) */
       #nav-handler .transition .h-\\[var\\(--workspace-height\\)\\] {
-        top: 760px;
+        top: 740px;
       }
       
       /* Navigation */

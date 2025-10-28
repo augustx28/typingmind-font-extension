@@ -45,3 +45,31 @@
 
   console.log('[TypingMind] Color overrides injected.');
 })();
+
+// chat-button-tweak.js
+(() => {
+  const STYLE_ID = 'tm-chat-button-tweak';
+  if (document.getElementById(STYLE_ID)) return;
+
+  const css = String.raw`
+/* Transition all */
+#elements-in-action-buttons > .transition-all{
+ position:relative;
+ top:-3px;
+}
+  `;
+
+  const style = document.createElement('style');
+  style.id = STYLE_ID;
+  style.setAttribute('data-origin', 'typingmind-extension');
+  style.textContent = css;
+
+  const attach = () => (document.head || document.documentElement).appendChild(style);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attach, { once: true });
+  } else {
+    attach();
+  }
+
+  console.log('[TypingMind] Chat action button positioning tweak injected.');
+})();

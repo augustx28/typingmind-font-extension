@@ -10,7 +10,7 @@
       color: #ffffff !important;
     }
 
-    /* ── DARK MODE: user message bubble → #141414 ── */
+    /* ── DARK MODE: user message bubble → #141414 bg + #dfdedb text ── */
     html.dark [data-element-id="user-message"],
     body.dark [data-element-id="user-message"],
     .dark [data-element-id="user-message"] {

@@ -14,13 +14,6 @@
 
 @font-face {
   font-family: 'SF Pro Text';
-  src: url('https://raw.githubusercontent.com/augustx28/San-Francisco-Pro-Fonts/master/SF-Pro-Text-Semibold.otf') format('opentype');
-  font-weight: 600;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'SF Pro Text';
   src: url('https://raw.githubusercontent.com/augustx28/San-Francisco-Pro-Fonts/master/SF-Pro-Text-Bold.otf') format('opentype');
   font-weight: 700;
   font-style: normal;

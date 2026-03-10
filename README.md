@@ -1,1 +1,1 @@
-# typingmind-extensions
+# typingmind extensions
